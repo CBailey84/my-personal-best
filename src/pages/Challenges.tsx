@@ -266,11 +266,10 @@ export default function Challenges() {
           return (
             <button
               key={ch.id}
-              onClick={() => completeChallenge(ch)}
-              disabled={done}
+              onClick={() => toggleChallenge(ch)}
               className={`group flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-all ${
                 done
-                  ? 'border-border/50 bg-muted/30 opacity-50'
+                  ? 'border-primary/30 bg-primary/5 hover:border-destructive/40'
                   : 'border-border bg-card hover:border-primary/40 hover:box-glow'
               }`}
             >
