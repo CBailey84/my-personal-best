@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, X, Search, Dumbbell, CalendarIcon } from 'lucide-react';
+import { Plus, X, Search, Dumbbell, CalendarIcon, Pencil, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from 'date-fns';
 
@@ -39,6 +39,10 @@ export default function WorkoutPage() {
   const [saving, setSaving] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+  const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+  const [editTargetValue, setEditTargetValue] = useState('');
+  const [editResultValue, setEditResultValue] = useState('');
+  const [editDate, setEditDate] = useState('');
 
   useEffect(() => {
     if (user) loadWorkouts();
@@ -86,6 +90,39 @@ export default function WorkoutPage() {
     setResultValue('');
     setSearch('');
     setWorkoutDate(format(new Date(), 'yyyy-MM-dd'));
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('workouts').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Error deleting workout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Workout deleted' });
+      setWorkouts((prev) => prev.filter((w) => w.id !== id));
+    }
+  };
+
+  const startEdit = (w: Workout) => {
+    setEditingWorkout(w);
+    setEditTargetValue(String(w.target_value));
+    setEditResultValue(String(w.result_value));
+    setEditDate(w.workout_date);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingWorkout) return;
+    const { error } = await supabase.from('workouts').update({
+      target_value: parseFloat(editTargetValue),
+      result_value: parseFloat(editResultValue),
+      workout_date: editDate,
+    }).eq('id', editingWorkout.id);
+    if (error) {
+      toast({ title: 'Error updating workout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Workout updated' });
+      await loadWorkouts();
+      setEditingWorkout(null);
+    }
   };
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
@@ -257,24 +294,59 @@ export default function WorkoutPage() {
           return (
             <div
               key={w.id}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all"
+              className="rounded-xl border border-border bg-card p-4 transition-all"
             >
-              <span className="text-3xl">{workout?.icon ?? '🏅'}</span>
-              <div className="flex-1">
-                <h3 className="font-heading text-lg font-bold text-foreground">
-                  {workout?.label ?? w.workout_type}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {w.target_value} {w.target_unit}
-                  <span className="mx-1.5 text-border">·</span>
-                  {w.result_value} {w.result_unit}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">
-                  {format(parseISO(w.workout_date), 'dd MMM yyyy')}
-                </p>
-              </div>
+              {editingWorkout?.id === w.id ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                    <span className="font-heading font-bold text-foreground">{workout?.label ?? w.workout_type}</span>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Date</label>
+                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">{w.target_unit}</label>
+                      <input type="number" value={editTargetValue} onChange={(e) => setEditTargetValue(e.target.value)} className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">{w.result_unit}</label>
+                      <input type="number" value={editResultValue} onChange={(e) => setEditResultValue(e.target.value)} className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleEditSave} className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">Save</button>
+                    <button onClick={() => setEditingWorkout(null)} className="flex-1 rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <span className="text-3xl">{workout?.icon ?? '🏅'}</span>
+                  <div className="flex-1">
+                    <h3 className="font-heading text-lg font-bold text-foreground">
+                      {workout?.label ?? w.workout_type}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {w.target_value} {w.target_unit}
+                      <span className="mx-1.5 text-border">·</span>
+                      {w.result_value} {w.result_unit}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground mr-1">
+                      {format(parseISO(w.workout_date), 'dd MMM yyyy')}
+                    </p>
+                    <button onClick={() => startEdit(w)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground">
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => handleDelete(w.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
