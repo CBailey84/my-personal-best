@@ -51,6 +51,8 @@ const STAT_LABELS: Record<string, string> = {
 
 export default function Challenges() {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hideCompleted, setHideCompleted] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
