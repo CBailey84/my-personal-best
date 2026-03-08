@@ -7,6 +7,7 @@ import Landing from "./pages/Landing";
 import AppLayout from "./components/AppLayout";
 import Profile from "./pages/Profile";
 import Goals from "./pages/Goals";
+import Challenges from "./pages/Challenges";
 import EmptyPage from "./pages/EmptyPage";
 import NotFound from "./pages/NotFound";
 
