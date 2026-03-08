@@ -38,6 +38,7 @@ export default function WorkoutPage() {
   const [workoutDate, setWorkoutDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [saving, setSaving] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) loadWorkouts();
@@ -94,13 +95,19 @@ export default function WorkoutPage() {
   );
 
   const filteredWorkouts = useMemo(() => {
-    if (!listSearch) return workouts;
-    const q = listSearch.toLowerCase();
-    return workouts.filter((w) => {
-      const wk = getWorkout(w.workout_type);
-      return (wk?.label ?? w.workout_type).toLowerCase().includes(q);
-    });
-  }, [workouts, listSearch]);
+    let list = workouts;
+    if (selectedDates.size > 0) {
+      list = list.filter((w) => selectedDates.has(w.workout_date));
+    }
+    if (listSearch) {
+      const q = listSearch.toLowerCase();
+      list = list.filter((w) => {
+        const wk = getWorkout(w.workout_type);
+        return (wk?.label ?? w.workout_type).toLowerCase().includes(q);
+      });
+    }
+    return list;
+  }, [workouts, listSearch, selectedDates]);
 
   // Calendar data
   const workoutDates = useMemo(() => {
@@ -322,22 +329,38 @@ export default function WorkoutPage() {
             const dateStr = format(day, 'yyyy-MM-dd');
             const hasWorkout = workoutDates.has(dateStr);
             const isToday = isSameDay(day, new Date());
+            const isSelected = selectedDates.has(dateStr);
             return (
-              <div
+              <button
                 key={dateStr}
+                onClick={() => {
+                  if (!hasWorkout) return;
+                  setSelectedDates((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(dateStr)) {
+                      next.delete(dateStr);
+                    } else {
+                      next.add(dateStr);
+                    }
+                    return next;
+                  });
+                }}
+                disabled={!hasWorkout}
                 className={`flex h-9 items-center justify-center rounded-lg text-xs font-medium transition-colors ${
-                  hasWorkout
-                    ? 'bg-primary/20 text-primary font-bold'
+                  isSelected
+                    ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary/50'
+                    : hasWorkout
+                    ? 'bg-primary/20 text-primary font-bold cursor-pointer hover:bg-primary/30'
                     : isToday
                     ? 'border border-border text-foreground'
                     : 'text-muted-foreground'
                 }`}
               >
                 {day.getDate()}
-                {hasWorkout && (
+                {hasWorkout && !isSelected && (
                   <span className="ml-0.5 text-[8px]">●</span>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
