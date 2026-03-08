@@ -10,6 +10,7 @@ interface Profile {
   stamina: number;
   pull_strength: number;
   push_strength: number;
+  leg_power: number;
 }
 
 interface StatsCardProps {
@@ -21,11 +22,12 @@ const stats = [
   { key: 'stamina' as const, label: 'Stamina', color: 'bg-primary' },
   { key: 'pull_strength' as const, label: 'Pull Strength', color: 'bg-primary' },
   { key: 'push_strength' as const, label: 'Push Strength', color: 'bg-primary' },
+  { key: 'leg_power' as const, label: 'Leg Power', color: 'bg-primary' },
 ];
 
 export default function StatsCard({ profile }: StatsCardProps) {
   const overallRating = Math.round(
-    (profile.speed + profile.stamina + profile.pull_strength + profile.push_strength) / 4
+    (profile.speed + profile.stamina + profile.pull_strength + profile.push_strength + profile.leg_power) / 5
   );
 
   return (
