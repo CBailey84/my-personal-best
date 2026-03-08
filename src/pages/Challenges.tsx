@@ -167,7 +167,7 @@ export default function Challenges() {
       if (!profile) return;
 
       const currentVal = (profile as Record<string, number>)[challenge.stat] || 1;
-      const newVal = Math.min(currentVal + challenge.uplift, 99);
+      const newVal = Math.min(currentVal + challenge.uplift, 100);
 
       await supabase
         .from('profiles')
