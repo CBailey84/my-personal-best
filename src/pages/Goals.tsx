@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', secondaryUnit: 'min' },
@@ -32,6 +32,11 @@ export default function Goals() {
   const [targetValue, setTargetValue] = useState('');
   const [secondaryValue, setSecondaryValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState(false);
+
+  const displayedGoals = useMemo(() => {
+    return hideCompleted ? goals.filter((g) => !g.completed) : goals;
+  }, [goals, hideCompleted]);
 
   useEffect(() => {
     if (user) loadGoals();
@@ -95,6 +100,16 @@ export default function Goals() {
           className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90"
         >
           <Plus className="h-4 w-4" /> Add Goal
+        </button>
+        <button
+          onClick={() => setHideCompleted(!hideCompleted)}
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+            hideCompleted
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border bg-card text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {hideCompleted ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </button>
       </div>
 
@@ -189,8 +204,8 @@ export default function Goals() {
       )}
 
       {/* Goal Tiles */}
-      <div className="space-y-3">
-        {goals.map((goal) => {
+      <div className="space-y-3 pb-24">
+        {displayedGoals.map((goal) => {
           const workout = getWorkout(goal.workout_type);
           return (
             <div
