@@ -50,6 +50,9 @@
 
     --glow-primary: 0 0 20px hsl(174 72% 46% / 0.3);
     --glow-primary-strong: 0 0 40px hsl(174 72% 46% / 0.4);
+    --gold: 38 92% 50%;
+    --gold-light: 45 93% 58%;
+    --gold-glow: 0 0 20px hsl(38 92% 50% / 0.15);
   }
 }
 

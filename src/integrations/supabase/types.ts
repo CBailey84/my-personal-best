@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_bests: {
+        Row: {
+          achieved_at: string
+          created_at: string
+          id: string
+          result_unit: string
+          result_value: number
+          target_unit: string
+          target_value: number
+          user_id: string
+          workout_type: string
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string
+          id?: string
+          result_unit: string
+          result_value: number
+          target_unit: string
+          target_value: number
+          user_id: string
+          workout_type: string
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string
+          id?: string
+          result_unit?: string
+          result_value?: number
+          target_unit?: string
+          target_value?: number
+          user_id?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
