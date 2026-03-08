@@ -38,11 +38,18 @@ const CHALLENGES: Challenge[] = [
   { id: 'bench-10xbw20', title: 'Bench press 10 reps at bodyweight + 20kg', stat: 'push_strength', uplift: 10, category: 'Bench Press' },
   { id: 'bench-1xbw10', title: 'Bench press 1 rep at bodyweight + 10kg', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
   { id: 'bench-1xbw20', title: 'Bench press 1 rep at bodyweight + 20kg', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
+  { id: 'bench-10x40', title: 'Bench press 10 reps of 40kg', stat: 'push_strength', uplift: 3, category: 'Bench Press' },
+  { id: 'bench-1xbw30', title: 'Bench press 1 rep at bodyweight + 30kg', stat: 'push_strength', uplift: 10, category: 'Bench Press' },
   // Pull ups
   { id: 'pullup-3', title: 'Complete 3 pull ups in one go', stat: 'pull_strength', uplift: 1, category: 'Pull Ups' },
   { id: 'pullup-5', title: 'Complete 5 pull ups in one go', stat: 'pull_strength', uplift: 2, category: 'Pull Ups' },
   { id: 'pullup-10', title: 'Complete 10 pull ups in one go', stat: 'pull_strength', uplift: 5, category: 'Pull Ups' },
+  { id: 'pullup-15', title: 'Complete 15 pull ups in one go', stat: 'pull_strength', uplift: 20, category: 'Pull Ups' },
+  // Dead hangs
+  { id: 'deadhang-1min', title: 'Complete a 1 minute dead-hang', stat: 'pull_strength', uplift: 10, category: 'Dead Hangs' },
+  { id: 'deadhang-2min', title: 'Complete a 2 minute dead-hang', stat: 'pull_strength', uplift: 20, category: 'Dead Hangs' },
   // Bicep curls
+  { id: 'curl-5kg', title: 'Complete 10 bicep curls of 5kg (per arm)', stat: 'pull_strength', uplift: 2, category: 'Bicep Curls' },
   { id: 'curl-10kg', title: 'Complete 10 bicep curls of 10kg (per arm)', stat: 'pull_strength', uplift: 1, category: 'Bicep Curls' },
   { id: 'curl-15kg', title: 'Complete 10 bicep curls of 15kg (per arm)', stat: 'pull_strength', uplift: 3, category: 'Bicep Curls' },
   { id: 'curl-20kg', title: 'Complete 10 bicep curls of 20kg (per arm)', stat: 'pull_strength', uplift: 5, category: 'Bicep Curls' },
@@ -50,6 +57,7 @@ const CHALLENGES: Challenge[] = [
   { id: 'sprint-20s', title: 'Run 100m in 20 seconds or less', stat: 'speed', uplift: 1, category: 'Sprints' },
   { id: 'sprint-16s', title: 'Run 100m in 16 seconds or less', stat: 'speed', uplift: 2, category: 'Sprints' },
   { id: 'sprint-14s', title: 'Run 100m in 14 seconds or less', stat: 'speed', uplift: 5, category: 'Sprints' },
+  { id: 'sprint-12s', title: 'Run 100m in 12 seconds or less', stat: 'speed', uplift: 20, category: 'Sprints' },
 ];
 
 const STAT_LABELS: Record<string, string> = {
