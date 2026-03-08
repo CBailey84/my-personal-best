@@ -213,7 +213,7 @@ export default function Challenges() {
       if (profile) {
         const updates: Record<string, number> = {};
         for (const stat of statKeys) {
-          const currentVal = (profile as Record<string, number>)[stat] || 1;
+          const currentVal = (profile as unknown as Record<string, number>)[stat] || 1;
           updates[stat] = Math.max(currentVal - statReductions[stat], 1);
         }
         await supabase.from('profiles').update(updates).eq('user_id', user!.id);
