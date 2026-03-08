@@ -1,93 +1,83 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Plus, X } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Trophy } from 'lucide-react';
 
 const WORKOUTS = [
-  { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min' },
-  { id: 'bike', label: 'Bike', icon: '🚴', primaryUnit: 'km', resultUnit: 'min' },
-  { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'push-ups', label: 'Push Ups', icon: '💪', primaryUnit: 'reps', resultUnit: 'reps' },
-  { id: 'pull-ups', label: 'Pull Ups', icon: '🧗', primaryUnit: 'reps', resultUnit: 'reps' },
+  { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
+  { id: 'bike', label: 'Bike', icon: '🚴', primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
+  { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'push-ups', label: 'Push Ups', icon: '💪', primaryUnit: 'reps', resultUnit: 'reps', bestIs: 'highest' as const },
+  { id: 'pull-ups', label: 'Pull Ups', icon: '🧗', primaryUnit: 'reps', resultUnit: 'reps', bestIs: 'highest' as const },
 ];
 
-interface PB {
-  id: string;
+interface WorkoutRecord {
   workout_type: string;
   target_value: number;
   target_unit: string;
   result_value: number;
   result_unit: string;
-  achieved_at: string;
+  workout_date: string;
+}
+
+interface PBEntry {
+  workout_type: string;
+  target_value: number;
+  target_unit: string;
+  result_value: number;
+  result_unit: string;
+  workout_date: string;
 }
 
 export default function PersonalBests() {
   const { user } = useAuth();
-  const [pbs, setPbs] = useState<PB[]>([]);
+  const [allWorkouts, setAllWorkouts] = useState<WorkoutRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [search, setSearch] = useState('');
-  const [selectedWorkout, setSelectedWorkout] = useState<typeof WORKOUTS[0] | null>(null);
-  const [targetValue, setTargetValue] = useState('');
-  const [resultValue, setResultValue] = useState('');
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (user) loadPBs();
+    if (user) loadWorkouts();
   }, [user]);
 
-  const loadPBs = async () => {
+  const loadWorkouts = async () => {
     const { data } = await supabase
-      .from('personal_bests')
-      .select('*')
-      .eq('user_id', user!.id)
-      .order('achieved_at', { ascending: false });
-    if (data) setPbs(data as PB[]);
+      .from('workouts')
+      .select('workout_type, target_value, target_unit, result_value, result_unit, workout_date')
+      .eq('user_id', user!.id);
+    if (data) setAllWorkouts(data as WorkoutRecord[]);
     setLoading(false);
   };
 
-  const handleAdd = async () => {
-    if (!selectedWorkout || !targetValue || !resultValue) return;
-    setSaving(true);
+  // Derive PBs: best result per workout_type + target_value combo
+  const pbs = useMemo(() => {
+    const map = new Map<string, PBEntry>();
 
-    const { error } = await supabase.from('personal_bests').upsert(
-      {
-        user_id: user!.id,
-        workout_type: selectedWorkout.id,
-        target_value: parseFloat(targetValue),
-        target_unit: selectedWorkout.primaryUnit,
-        result_value: parseFloat(resultValue),
-        result_unit: selectedWorkout.resultUnit,
-        achieved_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,workout_type,target_value,target_unit' }
-    );
+    allWorkouts.forEach((w) => {
+      const key = `${w.workout_type}|${w.target_value}|${w.target_unit}`;
+      const existing = map.get(key);
+      const wkDef = WORKOUTS.find((wk) => wk.id === w.workout_type);
+      const isBetter = !existing || (
+        wkDef?.bestIs === 'lowest'
+          ? w.result_value < existing.result_value
+          : w.result_value > existing.result_value
+      );
 
-    if (error) {
-      toast({ title: 'Error saving PB', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: '🏆 Personal Best recorded!' });
-      await loadPBs();
-      resetForm();
-    }
-    setSaving(false);
-  };
+      if (isBetter) {
+        map.set(key, {
+          workout_type: w.workout_type,
+          target_value: w.target_value,
+          target_unit: w.target_unit,
+          result_value: w.result_value,
+          result_unit: w.result_unit,
+          workout_date: w.workout_date,
+        });
+      }
+    });
 
-  const resetForm = () => {
-    setShowForm(false);
-    setSelectedWorkout(null);
-    setTargetValue('');
-    setResultValue('');
-    setSearch('');
-  };
+    return Array.from(map.values());
+  }, [allWorkouts]);
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
-
-  const filteredWorkouts = WORKOUTS.filter((w) =>
-    w.label.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -100,109 +90,23 @@ export default function PersonalBests() {
   return (
     <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <h1 className="font-heading text-3xl font-bold text-foreground">
           PERSONAL <span className="text-gold-light">BESTS</span>
         </h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-background transition-all hover:bg-gold-light"
-        >
-          <Plus className="h-4 w-4" /> Add PB
-        </button>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Automatically tracked from your logged workouts
+        </p>
       </div>
-
-      {/* Add PB Form */}
-      {showForm && (
-        <div className="mb-6 animate-slide-up rounded-xl border border-gold/30 bg-card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-heading text-lg font-semibold text-foreground">Record a PB</h3>
-            <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {!selectedWorkout ? (
-            <>
-              <div className="relative mb-3">
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search workouts..."
-                  className="w-full rounded-lg border border-border bg-secondary py-2.5 pl-4 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {filteredWorkouts.map((w) => (
-                  <button
-                    key={w.id}
-                    onClick={() => setSelectedWorkout(w)}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3 text-left transition-all hover:border-gold/50 hover:bg-muted"
-                  >
-                    <span className="text-2xl">{w.icon}</span>
-                    <span className="text-sm font-medium text-foreground">{w.label}</span>
-                  </button>
-                ))}
-                {filteredWorkouts.length === 0 && (
-                  <p className="col-span-2 py-4 text-center text-sm text-muted-foreground">No workouts found</p>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-lg border border-gold/30 bg-gold/5 p-3">
-                <span className="text-2xl">{selectedWorkout.icon}</span>
-                <span className="font-medium text-foreground">{selectedWorkout.label}</span>
-                <button onClick={() => setSelectedWorkout(null)} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
-                  Change
-                </button>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">
-                  Distance / Reps ({selectedWorkout.primaryUnit})
-                </label>
-                <input
-                  type="number"
-                  value={targetValue}
-                  onChange={(e) => setTargetValue(e.target.value)}
-                  placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : '10'}`}
-                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">
-                  Best Result ({selectedWorkout.resultUnit})
-                </label>
-                <input
-                  type="number"
-                  value={resultValue}
-                  onChange={(e) => setResultValue(e.target.value)}
-                  placeholder={`e.g. ${selectedWorkout.resultUnit === 'min' ? '25' : '80'}`}
-                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
-                />
-              </div>
-
-              <button
-                onClick={handleAdd}
-                disabled={!targetValue || !resultValue || saving}
-                className="w-full rounded-lg bg-gold py-3 font-heading font-semibold text-background transition-all hover:bg-gold-light disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : '🏆 Save Personal Best'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* PB Tiles */}
       <div className="space-y-3">
         {pbs.map((pb) => {
           const workout = getWorkout(pb.workout_type);
+          const key = `${pb.workout_type}-${pb.target_value}-${pb.target_unit}`;
           return (
             <div
-              key={pb.id}
+              key={key}
               className="relative overflow-hidden rounded-xl border border-gold/40 p-4"
               style={{
                 background: 'linear-gradient(135deg, hsl(var(--gold) / 0.1), hsl(var(--card)), hsl(var(--gold) / 0.05))',
@@ -241,17 +145,17 @@ export default function PersonalBests() {
 
               <div className="mt-2 text-right">
                 <span className="text-[10px] text-muted-foreground">
-                  {new Date(pb.achieved_at).toLocaleDateString()}
+                  {new Date(pb.workout_date).toLocaleDateString()}
                 </span>
               </div>
             </div>
           );
         })}
 
-        {pbs.length === 0 && !showForm && (
+        {pbs.length === 0 && (
           <div className="flex flex-col items-center py-16 text-center">
             <span className="mb-3 text-5xl">🏆</span>
-            <p className="text-muted-foreground">No personal bests yet. Record your first one!</p>
+            <p className="text-muted-foreground">No personal bests yet. Log workouts to see your records here!</p>
           </div>
         )}
       </div>
