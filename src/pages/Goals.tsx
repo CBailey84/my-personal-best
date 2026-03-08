@@ -9,7 +9,7 @@ const WORKOUTS = [
   { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', secondaryUnit: 'kg' },
   { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', secondaryUnit: 'kg' },
   { id: 'push-ups', label: 'Push Ups', icon: '💪', primaryUnit: 'reps', secondaryUnit: null },
-  { id: 'pull-ups', label: 'Pull Ups', icon: '🧗', primaryUnit: 'reps', secondaryUnit: null },
+  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', primaryUnit: 'reps', secondaryUnit: null },
   { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', primaryUnit: 'reps', secondaryUnit: 'kg' },
 ];
 
