@@ -15,6 +15,7 @@ interface ProfileData {
   stamina: number;
   pull_strength: number;
   push_strength: number;
+  leg_power: number;
 }
 
 export default function Profile() {
@@ -31,7 +32,7 @@ export default function Profile() {
   const loadProfile = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('name, age, height_cm, weight_kg, avatar_id, speed, stamina, pull_strength, push_strength')
+      .select('name, age, height_cm, weight_kg, avatar_id, speed, stamina, pull_strength, push_strength, leg_power')
       .eq('user_id', user!.id)
       .single();
 
