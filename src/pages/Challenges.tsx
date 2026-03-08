@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Trophy, Search, EyeOff, Eye } from 'lucide-react';
+import { Check, Trophy, Search, EyeOff, Eye, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 
@@ -183,6 +183,50 @@ export default function Challenges() {
     }
   };
 
+  const uncompleteAll = async () => {
+    if (completedIds.size === 0) return;
+
+    // Get all completed challenges with their stat info
+    const completedChallenges = CHALLENGES.filter((ch) => completedIds.has(ch.id));
+
+    // Calculate total uplift per stat to subtract
+    const statReductions: Record<string, number> = {};
+    for (const ch of completedChallenges) {
+      statReductions[ch.stat] = (statReductions[ch.stat] || 0) + ch.uplift;
+    }
+
+    // Delete all completion records
+    const { error: deleteError } = await supabase
+      .from('user_challenges')
+      .delete()
+      .eq('user_id', user!.id);
+    if (deleteError) return;
+
+    // Get current profile stats and subtract
+    const statKeys = Object.keys(statReductions);
+    if (statKeys.length > 0) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(statKeys.join(','))
+        .eq('user_id', user!.id)
+        .single();
+      if (profile) {
+        const updates: Record<string, number> = {};
+        for (const stat of statKeys) {
+          const currentVal = (profile as unknown as Record<string, number>)[stat] || 1;
+          updates[stat] = Math.max(currentVal - statReductions[stat], 1);
+        }
+        await supabase.from('profiles').update(updates).eq('user_id', user!.id);
+      }
+    }
+
+    setCompletedIds(new Set());
+    toast({
+      title: 'All challenges reset',
+      description: `${completedChallenges.length} challenges un-completed. Stats adjusted.`,
+    });
+  };
+
   const filteredChallenges = useMemo(() => {
     return CHALLENGES.filter((ch) => {
       if (hideCompleted && completedIds.has(ch.id)) return false;
@@ -230,7 +274,17 @@ export default function Challenges() {
             </div>
           </div>
         </div>
+        {completedCount > 0 && (
+          <button
+            onClick={uncompleteAll}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Un-complete all challenges
+          </button>
+        )}
       </div>
+
 
       {/* Search & Filter */}
       <div className="mb-4 flex items-center gap-2">
