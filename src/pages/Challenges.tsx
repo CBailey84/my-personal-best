@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Trophy } from 'lucide-react';
+import { Check, Trophy, Search, EyeOff, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 interface Challenge {
   id: string;
