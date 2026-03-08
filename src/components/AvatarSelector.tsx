@@ -8,7 +8,7 @@ const AVATARS = [
   { id: 'avatar-1', src: avatarRunner, label: 'Runner' },
   { id: 'avatar-2', src: avatarBiker, label: 'Biker' },
   { id: 'avatar-3', src: avatarBench, label: 'Bench Press' },
-  { id: 'avatar-4', src: avatarCurls, label: 'Bicep Curls' },
+  { id: 'avatar-4', src: avatarCurls, label: 'Pull Ups' },
   { id: 'avatar-5', src: avatarGymnast, label: 'Gymnast' },
 ];
 
