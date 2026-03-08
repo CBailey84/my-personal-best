@@ -22,7 +22,7 @@ const CHALLENGES: Challenge[] = [
   // Running (stamina)
   { id: 'run-5k', title: 'Complete a 5km run', stat: 'stamina', uplift: 1, category: 'Running' },
   { id: 'run-10k', title: 'Complete a 10km run', stat: 'stamina', uplift: 3, category: 'Running' },
-  { id: 'run-20k', title: 'Complete a 20km run', stat: 'stamina', uplift: 5, category: 'Running' },
+  { id: 'run-15k', title: 'Complete a 15km run', stat: 'stamina', uplift: 5, category: 'Running' },
   { id: 'run-half-marathon', title: 'Complete a half marathon run (21km)', stat: 'stamina', uplift: 10, category: 'Running' },
   { id: 'run-marathon', title: 'Complete a marathon run (42km)', stat: 'stamina', uplift: 20, category: 'Running' },
   // Biking
