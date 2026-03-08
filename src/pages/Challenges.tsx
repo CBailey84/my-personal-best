@@ -103,9 +103,18 @@ export default function Challenges() {
     });
   };
 
-  const completedCount = completedIds.size;
+  const filteredChallenges = useMemo(() => {
+    return CHALLENGES.filter((ch) => {
+      if (hideCompleted && completedIds.has(ch.id)) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return ch.title.toLowerCase().includes(q) || ch.category.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [searchQuery, hideCompleted, completedIds]);
 
-  if (loading) {
+  const completedCount = completedIds.size;
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
