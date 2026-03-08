@@ -48,6 +48,9 @@ const CHALLENGES: Challenge[] = [
   // Dead hangs
   { id: 'deadhang-1min', title: 'Complete a 1 minute dead-hang', stat: 'pull_strength', uplift: 10, category: 'Dead Hangs' },
   { id: 'deadhang-2min', title: 'Complete a 2 minute dead-hang', stat: 'pull_strength', uplift: 20, category: 'Dead Hangs' },
+  // Seated rows
+  { id: 'row-10x40', title: 'Complete 10 reps of 40kg seated row', stat: 'pull_strength', uplift: 5, category: 'Seated Rows' },
+  { id: 'row-10xbw', title: 'Complete 10 reps of bodyweight seated row', stat: 'pull_strength', uplift: 7, category: 'Seated Rows' },
   // Bicep curls
   { id: 'curl-5kg', title: 'Complete 10 bicep curls of 5kg (per arm)', stat: 'pull_strength', uplift: 2, category: 'Bicep Curls' },
   { id: 'curl-10kg', title: 'Complete 10 bicep curls of 10kg (per arm)', stat: 'pull_strength', uplift: 1, category: 'Bicep Curls' },
