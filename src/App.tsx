@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import Goals from "./pages/Goals";
 import Challenges from "./pages/Challenges";
 import PersonalBests from "./pages/PersonalBests";
+import WorkoutPage from "./pages/Workout";
 import EmptyPage from "./pages/EmptyPage";
 import NotFound from "./pages/NotFound";
 
@@ -26,7 +27,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/challenges" element={<Challenges />} />
-            <Route path="/workout" element={<EmptyPage title="WORKOUT" description="Log and plan your workouts." />} />
+            <Route path="/workout" element={<WorkoutPage />} />
             <Route path="/pb" element={<PersonalBests />} />
             <Route path="/assistant" element={<EmptyPage title="ASSISTANT" description="Your AI training companion." />} />
           </Route>
