@@ -61,6 +61,12 @@ const CHALLENGES: Challenge[] = [
   { id: 'sprint-16s', title: 'Run 100m in 16 seconds or less', stat: 'speed', uplift: 2, category: 'Sprints' },
   { id: 'sprint-14s', title: 'Run 100m in 14 seconds or less', stat: 'speed', uplift: 5, category: 'Sprints' },
   { id: 'sprint-12s', title: 'Run 100m in 12 seconds or less', stat: 'speed', uplift: 20, category: 'Sprints' },
+  { id: 'sprint-20m-5s', title: 'Sprint 20m in 5 seconds or less', stat: 'speed', uplift: 3, category: 'Sprints' },
+  { id: 'sprint-20m-4s', title: 'Sprint 20m in 4 seconds or less', stat: 'speed', uplift: 5, category: 'Sprints' },
+  { id: 'sprint-20m-3s', title: 'Sprint 20m in 3 seconds or less', stat: 'speed', uplift: 10, category: 'Sprints' },
+  // Cycling speed
+  { id: 'cycle-1km-2m30', title: 'Cycle 1km in 2 mins 30s or less', stat: 'speed', uplift: 5, category: 'Cycling' },
+  { id: 'cycle-1km-2m', title: 'Cycle 1km in 2 mins or less', stat: 'speed', uplift: 10, category: 'Cycling' },
 ];
 
 const STAT_LABELS: Record<string, string> = {
