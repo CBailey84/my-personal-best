@@ -37,8 +37,8 @@ export default function StatsCard({ profile }: StatsCardProps) {
 
       {/* Header row */}
       <div className="mb-4 flex items-center gap-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-border bg-secondary text-5xl">
-          {getAvatarEmoji(profile.avatar_id)}
+        <div className="h-20 w-20 overflow-hidden rounded-xl border border-border bg-secondary">
+          <img src={getAvatarSrc(profile.avatar_id)} alt="Avatar" className="h-full w-full object-cover" />
         </div>
         <div className="flex-1">
           <h2 className="font-heading text-2xl font-bold text-foreground">
