@@ -274,7 +274,17 @@ export default function Challenges() {
             </div>
           </div>
         </div>
+        {completedCount > 0 && (
+          <button
+            onClick={uncompleteAll}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Un-complete all challenges
+          </button>
+        )}
       </div>
+
 
       {/* Search & Filter */}
       <div className="mb-4 flex items-center gap-2">
