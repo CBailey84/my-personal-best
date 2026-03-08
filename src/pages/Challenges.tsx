@@ -183,6 +183,50 @@ export default function Challenges() {
     }
   };
 
+  const uncompleteAll = async () => {
+    if (completedIds.size === 0) return;
+
+    // Get all completed challenges with their stat info
+    const completedChallenges = CHALLENGES.filter((ch) => completedIds.has(ch.id));
+
+    // Calculate total uplift per stat to subtract
+    const statReductions: Record<string, number> = {};
+    for (const ch of completedChallenges) {
+      statReductions[ch.stat] = (statReductions[ch.stat] || 0) + ch.uplift;
+    }
+
+    // Delete all completion records
+    const { error: deleteError } = await supabase
+      .from('user_challenges')
+      .delete()
+      .eq('user_id', user!.id);
+    if (deleteError) return;
+
+    // Get current profile stats and subtract
+    const statKeys = Object.keys(statReductions);
+    if (statKeys.length > 0) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(statKeys.join(','))
+        .eq('user_id', user!.id)
+        .single();
+      if (profile) {
+        const updates: Record<string, number> = {};
+        for (const stat of statKeys) {
+          const currentVal = (profile as Record<string, number>)[stat] || 1;
+          updates[stat] = Math.max(currentVal - statReductions[stat], 1);
+        }
+        await supabase.from('profiles').update(updates).eq('user_id', user!.id);
+      }
+    }
+
+    setCompletedIds(new Set());
+    toast({
+      title: 'All challenges reset',
+      description: `${completedChallenges.length} challenges un-completed. Stats adjusted.`,
+    });
+  };
+
   const filteredChallenges = useMemo(() => {
     return CHALLENGES.filter((ch) => {
       if (hideCompleted && completedIds.has(ch.id)) return false;
