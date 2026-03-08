@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Plus, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min' },
@@ -93,7 +92,7 @@ export default function PersonalBests() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
       </div>
     );
   }
@@ -103,11 +102,11 @@ export default function PersonalBests() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold text-foreground">
-          PERSONAL <span className="text-amber-400">BESTS</span>
+          PERSONAL <span className="text-gold-light">BESTS</span>
         </h1>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition-all hover:bg-amber-400"
+          className="flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-background transition-all hover:bg-gold-light"
         >
           <Plus className="h-4 w-4" /> Add PB
         </button>
@@ -115,7 +114,7 @@ export default function PersonalBests() {
 
       {/* Add PB Form */}
       {showForm && (
-        <div className="mb-6 animate-slide-up rounded-xl border border-amber-500/30 bg-card p-5">
+        <div className="mb-6 animate-slide-up rounded-xl border border-gold/30 bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-heading text-lg font-semibold text-foreground">Record a PB</h3>
             <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
@@ -130,7 +129,7 @@ export default function PersonalBests() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search workouts..."
-                  className="w-full rounded-lg border border-border bg-secondary py-2.5 pl-4 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-border bg-secondary py-2.5 pl-4 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -138,7 +137,7 @@ export default function PersonalBests() {
                   <button
                     key={w.id}
                     onClick={() => setSelectedWorkout(w)}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3 text-left transition-all hover:border-amber-500/50 hover:bg-muted"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3 text-left transition-all hover:border-gold/50 hover:bg-muted"
                   >
                     <span className="text-2xl">{w.icon}</span>
                     <span className="text-sm font-medium text-foreground">{w.label}</span>
@@ -151,7 +150,7 @@ export default function PersonalBests() {
             </>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <div className="flex items-center gap-3 rounded-lg border border-gold/30 bg-gold/5 p-3">
                 <span className="text-2xl">{selectedWorkout.icon}</span>
                 <span className="font-medium text-foreground">{selectedWorkout.label}</span>
                 <button onClick={() => setSelectedWorkout(null)} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
@@ -168,7 +167,7 @@ export default function PersonalBests() {
                   value={targetValue}
                   onChange={(e) => setTargetValue(e.target.value)}
                   placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : '10'}`}
-                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
                 />
               </div>
 
@@ -181,14 +180,14 @@ export default function PersonalBests() {
                   value={resultValue}
                   onChange={(e) => setResultValue(e.target.value)}
                   placeholder={`e.g. ${selectedWorkout.resultUnit === 'min' ? '25' : '80'}`}
-                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
                 />
               </div>
 
               <button
                 onClick={handleAdd}
                 disabled={!targetValue || !resultValue || saving}
-                className="w-full rounded-lg bg-amber-500 py-3 font-heading font-semibold text-amber-950 transition-all hover:bg-amber-400 disabled:opacity-50"
+                className="w-full rounded-lg bg-gold py-3 font-heading font-semibold text-background transition-all hover:bg-gold-light disabled:opacity-50"
               >
                 {saving ? 'Saving...' : '🏆 Save Personal Best'}
               </button>
@@ -204,33 +203,39 @@ export default function PersonalBests() {
           return (
             <div
               key={pb.id}
-              className="relative overflow-hidden rounded-xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-card to-amber-600/5 p-4"
-              style={{ boxShadow: '0 0 20px hsl(38 92% 50% / 0.15), inset 0 1px 0 hsl(38 92% 70% / 0.1)' }}
+              className="relative overflow-hidden rounded-xl border border-gold/40 p-4"
+              style={{
+                background: 'linear-gradient(135deg, hsl(var(--gold) / 0.1), hsl(var(--card)), hsl(var(--gold) / 0.05))',
+                boxShadow: 'var(--gold-glow), inset 0 1px 0 hsl(var(--gold-light) / 0.1)',
+              }}
             >
               {/* Decorative shimmer */}
-              <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-amber-400/10 blur-2xl" />
-              <div className="pointer-events-none absolute -left-2 -bottom-2 h-12 w-12 rounded-full bg-amber-500/5 blur-xl" />
+              <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gold/10 blur-2xl" />
+              <div className="pointer-events-none absolute -left-2 -bottom-2 h-12 w-12 rounded-full bg-gold/5 blur-xl" />
 
               <div className="relative flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-2xl">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/20 bg-gold/10 text-2xl">
                   {workout?.icon ?? '🏅'}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-heading text-lg font-bold text-amber-300">
+                    <h3 className="font-heading text-lg font-bold text-gold-light">
                       {workout?.label ?? pb.workout_type}
                     </h3>
-                    <Trophy className="h-4 w-4 text-amber-400" />
+                    <Trophy className="h-4 w-4 text-gold" />
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {pb.target_value} {pb.target_unit}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-heading text-2xl font-bold text-amber-400" style={{ textShadow: '0 0 12px hsl(38 92% 50% / 0.4)' }}>
+                  <p
+                    className="font-heading text-2xl font-bold text-gold"
+                    style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.4)' }}
+                  >
                     {pb.result_value}
                   </p>
-                  <p className="text-xs text-amber-400/60">{pb.result_unit}</p>
+                  <p className="text-xs text-gold/60">{pb.result_unit}</p>
                 </div>
               </div>
 
