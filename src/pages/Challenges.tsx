@@ -67,6 +67,19 @@ const CHALLENGES: Challenge[] = [
   // Cycling speed
   { id: 'cycle-1km-2m30', title: 'Cycle 1km in 2 mins 30s or less', stat: 'speed', uplift: 5, category: 'Cycling' },
   { id: 'cycle-1km-2m', title: 'Cycle 1km in 2 mins or less', stat: 'speed', uplift: 10, category: 'Cycling' },
+  // Leg Press
+  { id: 'legpress-10x30', title: 'Complete 10 reps of 30kg Leg Press', stat: 'leg_power', uplift: 3, category: 'Leg Press' },
+  { id: 'legpress-10x40', title: 'Complete 10 reps of 40kg Leg Press', stat: 'leg_power', uplift: 5, category: 'Leg Press' },
+  { id: 'legpress-10xbw', title: 'Complete 10 reps of bodyweight Leg Press', stat: 'leg_power', uplift: 10, category: 'Leg Press' },
+  { id: 'legpress-10xbw20', title: 'Complete 10 reps of bodyweight +20kg Leg Press', stat: 'leg_power', uplift: 10, category: 'Leg Press' },
+  { id: 'legpress-10xbw30', title: 'Complete 10 reps of bodyweight +30kg Leg Press', stat: 'leg_power', uplift: 20, category: 'Leg Press' },
+  // Squats
+  { id: 'squat-10', title: 'Complete 10 squats in one go', stat: 'leg_power', uplift: 5, category: 'Squats' },
+  { id: 'squat-20', title: 'Complete 20 squats in one go', stat: 'leg_power', uplift: 7, category: 'Squats' },
+  { id: 'squat-bb-20', title: 'Complete 10 reps of barbell squats with 20kg', stat: 'leg_power', uplift: 5, category: 'Squats' },
+  { id: 'squat-bb-30', title: 'Complete 10 reps of barbell squats with 30kg', stat: 'leg_power', uplift: 5, category: 'Squats' },
+  { id: 'squat-bb-40', title: 'Complete 10 reps of barbell squats with 40kg', stat: 'leg_power', uplift: 10, category: 'Squats' },
+  { id: 'squat-bb-bw', title: 'Complete 10 reps of barbell squats + bodyweight', stat: 'leg_power', uplift: 20, category: 'Squats' },
 ];
 
 const STAT_LABELS: Record<string, string> = {
