@@ -114,38 +114,73 @@ export default function Challenges() {
     setLoading(false);
   };
 
-  const completeChallenge = async (challenge: Challenge) => {
-    if (completedIds.has(challenge.id)) return;
+  const toggleChallenge = async (challenge: Challenge) => {
+    const isCompleted = completedIds.has(challenge.id);
 
-    // Insert completion record
-    const { error: insertError } = await supabase
-      .from('user_challenges')
-      .insert({ user_id: user!.id, challenge_id: challenge.id });
-    if (insertError) return;
+    if (isCompleted) {
+      // Remove completion record
+      const { error: deleteError } = await supabase
+        .from('user_challenges')
+        .delete()
+        .eq('user_id', user!.id)
+        .eq('challenge_id', challenge.id);
+      if (deleteError) return;
 
-    // Get current stat value
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select(challenge.stat)
-      .eq('user_id', user!.id)
-      .single();
-    if (!profile) return;
+      // Subtract the stat uplift
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(challenge.stat)
+        .eq('user_id', user!.id)
+        .single();
+      if (profile) {
+        const currentVal = (profile as Record<string, number>)[challenge.stat] || 1;
+        const newVal = Math.max(currentVal - challenge.uplift, 1);
+        await supabase
+          .from('profiles')
+          .update({ [challenge.stat]: newVal })
+          .eq('user_id', user!.id);
 
-    const currentVal = (profile as Record<string, number>)[challenge.stat] || 1;
-    const newVal = Math.min(currentVal + challenge.uplift, 99);
+        toast({
+          title: 'Challenge un-completed',
+          description: `${STAT_LABELS[challenge.stat]} -${challenge.uplift} (now ${newVal})`,
+        });
+      }
 
-    // Update the stat
-    await supabase
-      .from('profiles')
-      .update({ [challenge.stat]: newVal })
-      .eq('user_id', user!.id);
+      setCompletedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(challenge.id);
+        return next;
+      });
+    } else {
+      // Insert completion record
+      const { error: insertError } = await supabase
+        .from('user_challenges')
+        .insert({ user_id: user!.id, challenge_id: challenge.id });
+      if (insertError) return;
 
-    setCompletedIds((prev) => new Set([...prev, challenge.id]));
+      // Get current stat value
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(challenge.stat)
+        .eq('user_id', user!.id)
+        .single();
+      if (!profile) return;
 
-    toast({
-      title: '🏆 Challenge Complete!',
-      description: `${STAT_LABELS[challenge.stat]} +${challenge.uplift} (now ${newVal})`,
-    });
+      const currentVal = (profile as Record<string, number>)[challenge.stat] || 1;
+      const newVal = Math.min(currentVal + challenge.uplift, 99);
+
+      await supabase
+        .from('profiles')
+        .update({ [challenge.stat]: newVal })
+        .eq('user_id', user!.id);
+
+      setCompletedIds((prev) => new Set([...prev, challenge.id]));
+
+      toast({
+        title: '🏆 Challenge Complete!',
+        description: `${STAT_LABELS[challenge.stat]} +${challenge.uplift} (now ${newVal})`,
+      });
+    }
   };
 
   const filteredChallenges = useMemo(() => {
