@@ -1,4 +1,4 @@
-import { getAvatarEmoji } from './AvatarSelector';
+import { getAvatarSrc } from './AvatarSelector';
 
 interface Profile {
   name: string | null;
