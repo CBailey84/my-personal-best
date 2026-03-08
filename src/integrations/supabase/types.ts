@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           height_cm: number | null
           id: string
+          leg_power: number
           name: string | null
           pull_strength: number
           push_strength: number
@@ -36,6 +37,7 @@ export type Database = {
           created_at?: string
           height_cm?: number | null
           id?: string
+          leg_power?: number
           name?: string | null
           pull_strength?: number
           push_strength?: number
@@ -51,6 +53,7 @@ export type Database = {
           created_at?: string
           height_cm?: number | null
           id?: string
+          leg_power?: number
           name?: string | null
           pull_strength?: number
           push_strength?: number

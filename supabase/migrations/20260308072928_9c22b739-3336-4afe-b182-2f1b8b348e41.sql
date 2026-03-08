@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN leg_power INTEGER NOT NULL DEFAULT 1;
