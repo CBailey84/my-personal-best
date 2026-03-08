@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      goals: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          secondary_unit: string | null
+          secondary_value: number | null
+          target_unit: string
+          target_value: number
+          updated_at: string
+          user_id: string
+          workout_type: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          secondary_unit?: string | null
+          secondary_value?: number | null
+          target_unit: string
+          target_value: number
+          updated_at?: string
+          user_id: string
+          workout_type: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          secondary_unit?: string | null
+          secondary_value?: number | null
+          target_unit?: string
+          target_value?: number
+          updated_at?: string
+          user_id?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
