@@ -10,6 +10,7 @@ interface ProfileData {
   age: number | null;
   height_cm: number | null;
   weight_kg: number | null;
+  gender: string | null;
   avatar_id: string;
   speed: number;
   stamina: number;
@@ -22,7 +23,7 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', age: '', height_cm: '', weight_kg: '', avatar_id: 'avatar-1' });
+  const [form, setForm] = useState({ name: '', age: '', height_cm: '', weight_kg: '', gender: '', avatar_id: 'avatar-1' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function Profile() {
   const loadProfile = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('name, age, height_cm, weight_kg, avatar_id, speed, stamina, pull_strength, push_strength, leg_power')
+      .select('name, age, height_cm, weight_kg, gender, avatar_id, speed, stamina, pull_strength, push_strength, leg_power')
       .eq('user_id', user!.id)
       .single();
 
@@ -43,6 +44,7 @@ export default function Profile() {
         age: data.age?.toString() || '',
         height_cm: data.height_cm?.toString() || '',
         weight_kg: data.weight_kg?.toString() || '',
+        gender: (data as any).gender || '',
         avatar_id: data.avatar_id || 'avatar-1',
       });
       // Show edit form if profile is incomplete
@@ -59,6 +61,7 @@ export default function Profile() {
         age: form.age ? parseInt(form.age) : null,
         height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
         weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
+        gender: form.gender || null,
         avatar_id: form.avatar_id,
       })
       .eq('user_id', user!.id);
@@ -121,6 +124,21 @@ export default function Profile() {
               className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Your name"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Gender (optional)</label>
+            <select
+              value={form.gender}
+              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+              className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="other">Other</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
