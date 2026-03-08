@@ -23,6 +23,8 @@ const CHALLENGES: Challenge[] = [
   { id: 'run-5k', title: 'Complete a 5km run', stat: 'stamina', uplift: 1, category: 'Running' },
   { id: 'run-10k', title: 'Complete a 10km run', stat: 'stamina', uplift: 3, category: 'Running' },
   { id: 'run-20k', title: 'Complete a 20km run', stat: 'stamina', uplift: 5, category: 'Running' },
+  { id: 'run-half-marathon', title: 'Complete a half marathon run (21km)', stat: 'stamina', uplift: 10, category: 'Running' },
+  { id: 'run-marathon', title: 'Complete a marathon run (42km)', stat: 'stamina', uplift: 20, category: 'Running' },
   // Biking
   { id: 'bike-10k', title: 'Complete a 10km bike ride', stat: 'stamina', uplift: 1, category: 'Biking' },
   { id: 'bike-20k', title: 'Complete a 20km bike ride', stat: 'stamina', uplift: 2, category: 'Biking' },
@@ -31,10 +33,19 @@ const CHALLENGES: Challenge[] = [
   { id: 'bench-10x20', title: 'Bench press 10 reps of 20kg', stat: 'push_strength', uplift: 1, category: 'Bench Press' },
   { id: 'bench-1xbw', title: 'Bench press 1 rep at bodyweight', stat: 'push_strength', uplift: 3, category: 'Bench Press' },
   { id: 'bench-2xbw', title: 'Bench press 2 reps at bodyweight', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
+  { id: 'bench-10xbw', title: 'Bench press 10 reps at bodyweight', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
+  { id: 'bench-10xbw10', title: 'Bench press 10 reps at bodyweight + 10kg', stat: 'push_strength', uplift: 10, category: 'Bench Press' },
+  { id: 'bench-10xbw20', title: 'Bench press 10 reps at bodyweight + 20kg', stat: 'push_strength', uplift: 10, category: 'Bench Press' },
+  { id: 'bench-1xbw10', title: 'Bench press 1 rep at bodyweight + 10kg', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
+  { id: 'bench-1xbw20', title: 'Bench press 1 rep at bodyweight + 20kg', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
   // Pull ups
   { id: 'pullup-3', title: 'Complete 3 pull ups in one go', stat: 'pull_strength', uplift: 1, category: 'Pull Ups' },
   { id: 'pullup-5', title: 'Complete 5 pull ups in one go', stat: 'pull_strength', uplift: 2, category: 'Pull Ups' },
   { id: 'pullup-10', title: 'Complete 10 pull ups in one go', stat: 'pull_strength', uplift: 5, category: 'Pull Ups' },
+  // Bicep curls
+  { id: 'curl-10kg', title: 'Complete 10 bicep curls of 10kg (per arm)', stat: 'pull_strength', uplift: 1, category: 'Bicep Curls' },
+  { id: 'curl-15kg', title: 'Complete 10 bicep curls of 15kg (per arm)', stat: 'pull_strength', uplift: 3, category: 'Bicep Curls' },
+  { id: 'curl-20kg', title: 'Complete 10 bicep curls of 20kg (per arm)', stat: 'pull_strength', uplift: 5, category: 'Bicep Curls' },
   // Speed
   { id: 'sprint-20s', title: 'Run 100m in 20 seconds or less', stat: 'speed', uplift: 1, category: 'Sprints' },
   { id: 'sprint-16s', title: 'Run 100m in 16 seconds or less', stat: 'speed', uplift: 2, category: 'Sprints' },
