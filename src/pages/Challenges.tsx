@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Trophy } from 'lucide-react';
+import { Check, Trophy, Search, EyeOff, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 interface Challenge {
   id: string;
@@ -50,6 +51,8 @@ const STAT_LABELS: Record<string, string> = {
 
 export default function Challenges() {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hideCompleted, setHideCompleted] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -100,6 +103,17 @@ export default function Challenges() {
     });
   };
 
+  const filteredChallenges = useMemo(() => {
+    return CHALLENGES.filter((ch) => {
+      if (hideCompleted && completedIds.has(ch.id)) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return ch.title.toLowerCase().includes(q) || ch.category.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [searchQuery, hideCompleted, completedIds]);
+
   const completedCount = completedIds.size;
 
   if (loading) {
@@ -138,9 +152,36 @@ export default function Challenges() {
         </div>
       </div>
 
+      {/* Search & Filter */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search challenges..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <button
+          onClick={() => setHideCompleted(!hideCompleted)}
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+            hideCompleted
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border bg-card text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {hideCompleted ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          {hideCompleted ? 'Hidden' : 'Hide done'}
+        </button>
+      </div>
+
       {/* Challenge tiles */}
       <div className="space-y-3">
-        {CHALLENGES.map((ch) => {
+        {filteredChallenges.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">No challenges found.</p>
+        )}
+        {filteredChallenges.map((ch) => {
           const done = completedIds.has(ch.id);
           return (
             <button
