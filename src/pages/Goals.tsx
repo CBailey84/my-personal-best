@@ -320,6 +320,64 @@ export default function Goals() {
           </div>
         )}
       </div>
+
+      {/* Edit Goal Modal */}
+      {editingGoal && (() => {
+        const workout = getWorkout(editingGoal.workout_type);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingGoal(null)}>
+            <div className="w-full max-w-sm animate-slide-up rounded-xl border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-heading text-lg font-semibold text-foreground">Edit Goal</h3>
+                <button onClick={() => setEditingGoal(null)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mb-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                <span className="font-medium text-foreground">{workout?.label ?? editingGoal.workout_type}</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    Target ({editingGoal.target_unit})
+                  </label>
+                  <input
+                    type="number"
+                    value={editTargetValue}
+                    onChange={(e) => setEditTargetValue(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {editingGoal.secondary_unit && (
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">
+                      {editingGoal.secondary_unit === 'min' ? 'Target Time' : editingGoal.secondary_unit === 'sec' ? 'Duration' : 'Weight'} ({editingGoal.secondary_unit})
+                    </label>
+                    <input
+                      type="number"
+                      value={editSecondaryValue}
+                      onChange={(e) => setEditSecondaryValue(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                <button
+                  onClick={handleEdit}
+                  disabled={!editTargetValue || saving}
+                  className="w-full rounded-lg bg-primary py-3 font-heading font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
