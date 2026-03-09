@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,17 +22,29 @@ const STARTERS = [
 export default function Assistant() {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prefillHandled = useRef(false);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    const prefill = (location.state as any)?.prefill;
+    if (prefill && !prefillHandled.current && session) {
+      prefillHandled.current = true;
+      // Clear navigation state to prevent re-send on remount
+      window.history.replaceState({}, '');
+      send(prefill);
+    }
+  }, [location.state, session]);
 
   const send = async (text: string) => {
     if (!text.trim() || isLoading || !session) return;

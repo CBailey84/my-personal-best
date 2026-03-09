@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot } from 'lucide-react';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', secondaryUnit: 'min' },
@@ -30,6 +31,7 @@ interface Goal {
 
 export default function Goals() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
@@ -93,6 +95,13 @@ export default function Goals() {
   };
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
+
+  const askCoach = (goal: Goal) => {
+    const workout = getWorkout(goal.workout_type);
+    const goalName = `${workout?.label ?? goal.workout_type} – ${goal.target_value} ${goal.target_unit}${goal.secondary_value != null && goal.secondary_unit ? ` · ${goal.secondary_value} ${goal.secondary_unit}` : ''}`;
+    const prompt = `Provide my next workout steps for me to work towards achieving this goal: ${goalName}.`;
+    navigate('/assistant', { state: { prefill: prompt } });
+  };
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
@@ -233,16 +242,26 @@ export default function Goals() {
                   )}
                 </p>
               </div>
-              <button
-                onClick={() => toggleComplete(goal)}
-                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
-                  goal.completed
-                    ? 'border-primary/40 bg-primary/20 text-primary'
-                    : 'border-border hover:border-primary hover:bg-primary/10'
-                }`}
-              >
-                {goal.completed && <Check className="h-5 w-5" />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => askCoach(goal)}
+                  title="Ask AI Coach"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary"
+                >
+                  <Bot className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => toggleComplete(goal)}
+                  title="Completed"
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
+                    goal.completed
+                      ? 'border-primary/40 bg-primary/20 text-primary'
+                      : 'border-border hover:border-primary hover:bg-primary/10'
+                  }`}
+                >
+                  {goal.completed && <Check className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
           );
         })}
