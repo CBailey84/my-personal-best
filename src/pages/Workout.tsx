@@ -49,6 +49,7 @@ export default function WorkoutPage() {
   const [editTargetValue, setEditTargetValue] = useState('');
   const [editResultValue, setEditResultValue] = useState('');
   const [editDate, setEditDate] = useState('');
+  const [useSeconds, setUseSeconds] = useState(false);
 
   useEffect(() => {
     if (user) loadWorkouts();
@@ -69,13 +70,18 @@ export default function WorkoutPage() {
     if (!selectedWorkout || !targetValue || !resultValue) return;
     setSaving(true);
 
+    const isTimeResult = selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec';
+    const finalResultValue = isTimeResult && useSeconds
+      ? parseFloat(resultValue) / 60
+      : parseFloat(resultValue);
+
     const { error } = await supabase.from('workouts').insert({
       user_id: user!.id,
       workout_type: selectedWorkout.id,
       target_value: parseFloat(targetValue),
       target_unit: selectedWorkout.primaryUnit,
-      result_value: parseFloat(resultValue),
-      result_unit: selectedWorkout.resultUnit,
+      result_value: finalResultValue,
+      result_unit: 'min',
       workout_date: workoutDate,
     });
 
@@ -96,6 +102,7 @@ export default function WorkoutPage() {
     setResultValue('');
     setSearch('');
     setWorkoutDate(format(new Date(), 'yyyy-MM-dd'));
+    setUseSeconds(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -246,29 +253,57 @@ export default function WorkoutPage() {
 
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">
-                  {selectedWorkout.primaryUnit === 'km' ? 'Distance' : 'Reps'} ({selectedWorkout.primaryUnit})
+                  {selectedWorkout.primaryUnit === 'km' || selectedWorkout.primaryUnit === 'meters' ? 'Distance' : 'Reps'} ({selectedWorkout.primaryUnit})
                 </label>
                 <input
                   type="number"
                   value={targetValue}
                   onChange={(e) => setTargetValue(e.target.value)}
-                  placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : '10'}`}
+                  placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : selectedWorkout.primaryUnit === 'meters' ? '500' : '10'}`}
                   className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">
-                  {selectedWorkout.resultUnit === 'min' ? 'Time' : selectedWorkout.resultUnit === 'kg' ? 'Weight' : 'Count'} ({selectedWorkout.resultUnit})
-                </label>
-                <input
-                  type="number"
-                  value={resultValue}
-                  onChange={(e) => setResultValue(e.target.value)}
-                  placeholder={`e.g. ${selectedWorkout.resultUnit === 'min' ? '30' : '60'}`}
-                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
+              {(selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec') ? (
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground">
+                      Time ({useSeconds ? 'sec' : 'min'})
+                    </label>
+                    <div className="ml-auto flex items-center gap-1.5 text-xs">
+                      <span className={!useSeconds ? 'font-semibold text-foreground' : 'text-muted-foreground'}>min</span>
+                      <button
+                        type="button"
+                        onClick={() => setUseSeconds(!useSeconds)}
+                        className={`relative h-5 w-9 rounded-full transition-colors ${useSeconds ? 'bg-primary' : 'bg-border'}`}
+                      >
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-foreground transition-transform ${useSeconds ? 'left-[18px]' : 'left-0.5'}`} />
+                      </button>
+                      <span className={useSeconds ? 'font-semibold text-foreground' : 'text-muted-foreground'}>sec</span>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    value={resultValue}
+                    onChange={(e) => setResultValue(e.target.value)}
+                    placeholder={`e.g. ${useSeconds ? '120' : '30'}`}
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    {selectedWorkout.resultUnit === 'kg' ? 'Weight (kg)' : `Count (${selectedWorkout.resultUnit})`}
+                  </label>
+                  <input
+                    type="number"
+                    value={resultValue}
+                    onChange={(e) => setResultValue(e.target.value)}
+                    placeholder="e.g. 60"
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
 
               <button
                 onClick={handleAdd}
