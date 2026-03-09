@@ -36,6 +36,16 @@ export default function Assistant() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const prefill = (location.state as any)?.prefill;
+    if (prefill && !prefillHandled.current && session) {
+      prefillHandled.current = true;
+      // Clear navigation state to prevent re-send on remount
+      window.history.replaceState({}, '');
+      send(prefill);
+    }
+  }, [location.state, session]);
+
   const send = async (text: string) => {
     if (!text.trim() || isLoading || !session) return;
     const userMsg: Msg = { role: 'user', content: text.trim() };
