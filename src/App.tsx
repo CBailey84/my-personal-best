@@ -11,6 +11,7 @@ import Challenges from "./pages/Challenges";
 import PersonalBests from "./pages/PersonalBests";
 import WorkoutPage from "./pages/Workout";
 import Assistant from "./pages/Assistant";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/install" element={<Install />} />
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/goals" element={<Goals />} />
