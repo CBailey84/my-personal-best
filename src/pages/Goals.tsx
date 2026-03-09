@@ -96,6 +96,13 @@ export default function Goals() {
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
 
+  const askCoach = (goal: Goal) => {
+    const workout = getWorkout(goal.workout_type);
+    const goalName = `${workout?.label ?? goal.workout_type} – ${goal.target_value} ${goal.target_unit}${goal.secondary_value != null && goal.secondary_unit ? ` · ${goal.secondary_value} ${goal.secondary_unit}` : ''}`;
+    const prompt = `Provide my next workout steps for me to work towards achieving this goal: ${goalName}.`;
+    navigate('/assistant', { state: { prefill: prompt } });
+  };
+
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       <div className="mb-6 flex items-center justify-between">
