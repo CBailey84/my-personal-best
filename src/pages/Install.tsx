@@ -59,8 +59,8 @@ const Install = () => {
       <div className="container mx-auto p-4 min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className="text-2xl">App Installed!</CardTitle>
           </CardHeader>
@@ -81,8 +81,8 @@ const Install = () => {
     <div className="container mx-auto p-4 min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-            <Smartphone className="h-8 w-8 text-blue-600" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <Smartphone className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-2xl">Install Personal Best</CardTitle>
         </CardHeader>
@@ -93,15 +93,15 @@ const Install = () => {
           
           <div className="space-y-3">
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
               <span className="text-sm">Works offline</span>
             </div>
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
               <span className="text-sm">Fast app-like experience</span>
             </div>
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
               <span className="text-sm">Home screen access</span>
             </div>
           </div>
