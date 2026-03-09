@@ -20,15 +20,15 @@ const CHALLENGES: Challenge[] = [
   { id: 'pushup-20', title: 'Complete 20 push ups in one go', stat: 'push_strength', uplift: 7, category: 'Push Ups' },
   { id: 'pushup-30', title: 'Complete 30 push ups in one go', stat: 'push_strength', uplift: 7, category: 'Push Ups' },
   // Running (stamina)
-  { id: 'run-5k', title: 'Complete a 5km run', stat: 'stamina', uplift: 7, category: 'Running' },
+  { id: 'run-5k', title: 'Complete a 5km run', stat: 'stamina', uplift: 5, category: 'Running' },
   { id: 'run-10k', title: 'Complete a 10km run', stat: 'stamina', uplift: 10, category: 'Running' },
-  { id: 'run-15k', title: 'Complete a 15km run', stat: 'stamina', uplift: 15, category: 'Running' },
-  { id: 'run-half-marathon', title: 'Complete a half marathon run (21km)', stat: 'stamina', uplift: 15, category: 'Running' },
-  { id: 'run-marathon', title: 'Complete a marathon run (42km)', stat: 'stamina', uplift: 21, category: 'Running' },
+  { id: 'run-15k', title: 'Complete a 15km run', stat: 'stamina', uplift: 10, category: 'Running' },
+  { id: 'run-half-marathon', title: 'Complete a half marathon run (21km)', stat: 'stamina', uplift: 10, category: 'Running' },
+  { id: 'run-marathon', title: 'Complete a marathon run (42km)', stat: 'stamina', uplift: 15, category: 'Running' },
   // Biking
-  { id: 'bike-10k', title: 'Complete a 10km bike ride', stat: 'stamina', uplift: 7, category: 'Biking' },
-  { id: 'bike-20k', title: 'Complete a 20km bike ride', stat: 'stamina', uplift: 10, category: 'Biking' },
-  { id: 'bike-50k', title: 'Complete a 50km bike ride', stat: 'stamina', uplift: 15, category: 'Biking' },
+  { id: 'bike-10k', title: 'Complete a 10km bike ride', stat: 'stamina', uplift: 5, category: 'Biking' },
+  { id: 'bike-30k', title: 'Complete a 30km bike ride', stat: 'stamina', uplift: 10, category: 'Biking' },
+  { id: 'bike-100k', title: 'Complete a 100km bike ride', stat: 'stamina', uplift: 10, category: 'Biking' },
   // Bench press
   { id: 'bench-10x20', title: 'Bench press 10 reps of 20kg', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
   { id: 'bench-1xbw', title: 'Bench press 1 rep at bodyweight', stat: 'push_strength', uplift: 5, category: 'Bench Press' },
@@ -90,9 +90,10 @@ const CHALLENGES: Challenge[] = [
   { id: 'squat-bb-40', title: 'Complete 10 reps of barbell squats with 40kg', stat: 'leg_power', uplift: 10, category: 'Squats' },
   { id: 'squat-bb-bw', title: 'Complete 10 reps of barbell squats + bodyweight', stat: 'leg_power', uplift: 20, category: 'Squats' },
   // Swimming
-  { id: 'swim-500m', title: 'Swim 500 meters without stopping', stat: 'stamina', uplift: 7, category: 'Swimming' },
-  { id: 'swim-1000m', title: 'Swim 1000 meters without stopping', stat: 'stamina', uplift: 12, category: 'Swimming' },
-  { id: 'swim-2000m', title: 'Swim 2000 meters without stopping', stat: 'stamina', uplift: 20, category: 'Swimming' },
+  { id: 'swim-100m', title: 'Swim 100 meters without stopping', stat: 'stamina', uplift: 5, category: 'Swimming' },
+  { id: 'swim-300m', title: 'Swim 300 meters without stopping', stat: 'stamina', uplift: 5, category: 'Swimming' },
+  { id: 'swim-800m', title: 'Swim 800 meters without stopping', stat: 'stamina', uplift: 10, category: 'Swimming' },
+  { id: 'swim-1000m', title: 'Swim 1000 meters without stopping', stat: 'stamina', uplift: 10, category: 'Swimming' },
 ];
 
 const STAT_LABELS: Record<string, string> = {
