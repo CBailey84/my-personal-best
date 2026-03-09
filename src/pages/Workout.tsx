@@ -264,15 +264,34 @@ export default function WorkoutPage() {
                 />
               </div>
 
+              {(selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec') && (
+                <div className="flex items-center gap-2">
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    Time ({useSeconds ? 'sec' : 'min'})
+                  </label>
+                  <div className="ml-auto flex items-center gap-1.5 text-xs">
+                    <span className={!useSeconds ? 'font-semibold text-foreground' : 'text-muted-foreground'}>min</span>
+                    <button
+                      type="button"
+                      onClick={() => setUseSeconds(!useSeconds)}
+                      className={`relative h-5 w-9 rounded-full transition-colors ${useSeconds ? 'bg-primary' : 'bg-border'}`}
+                    >
+                      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-foreground transition-transform ${useSeconds ? 'left-[18px]' : 'left-0.5'}`} />
+                    </button>
+                    <span className={useSeconds ? 'font-semibold text-foreground' : 'text-muted-foreground'}>sec</span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">
-                  {selectedWorkout.resultUnit === 'min' ? 'Time' : selectedWorkout.resultUnit === 'kg' ? 'Weight' : 'Count'} ({selectedWorkout.resultUnit})
+                  {(selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec') ? `Time (${useSeconds ? 'sec' : 'min'})` : selectedWorkout.resultUnit === 'kg' ? 'Weight (kg)' : `Count (${selectedWorkout.resultUnit})`}
                 </label>
                 <input
                   type="number"
                   value={resultValue}
                   onChange={(e) => setResultValue(e.target.value)}
-                  placeholder={`e.g. ${selectedWorkout.resultUnit === 'min' ? '30' : '60'}`}
+                  placeholder={`e.g. ${(selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec') ? (useSeconds ? '120' : '30') : '60'}`}
                   className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
