@@ -100,6 +100,34 @@ export default function Goals() {
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
 
+  const startEdit = (goal: Goal) => {
+    setEditingGoal(goal);
+    setEditTargetValue(String(goal.target_value));
+    setEditSecondaryValue(goal.secondary_value != null ? String(goal.secondary_value) : '');
+  };
+
+  const handleEdit = async () => {
+    if (!editingGoal || !editTargetValue) return;
+    setSaving(true);
+    await supabase
+      .from('goals')
+      .update({
+        target_value: parseFloat(editTargetValue),
+        secondary_value: editSecondaryValue ? parseFloat(editSecondaryValue) : null,
+      })
+      .eq('id', editingGoal.id);
+    await loadGoals();
+    setEditingGoal(null);
+    setSaving(false);
+  };
+
+  const handleDelete = async (goalId: string) => {
+    setDeleting(goalId);
+    await supabase.from('goals').delete().eq('id', goalId);
+    await loadGoals();
+    setDeleting(null);
+  };
+
   const askCoach = (goal: Goal) => {
     const workout = getWorkout(goal.workout_type);
     const goalName = `${workout?.label ?? goal.workout_type} – ${goal.target_value} ${goal.target_unit}${goal.secondary_value != null && goal.secondary_unit ? ` · ${goal.secondary_value} ${goal.secondary_unit}` : ''}`;
