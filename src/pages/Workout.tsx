@@ -13,7 +13,7 @@ const WORKOUTS = [
   { id: 'push-ups', label: 'Push Ups', icon: '🙌', primaryUnit: 'reps', resultUnit: 'reps' },
   { id: 'pull-ups', label: 'Pull Ups', icon: '✊', primaryUnit: 'reps', resultUnit: 'reps' },
   { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🫸', primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg' },
   { id: 'seated-row', label: 'Seated Row', icon: '🚣', primaryUnit: 'reps', resultUnit: 'kg' },
   { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', resultUnit: 'sec' },
   { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', resultUnit: 'kg' },
