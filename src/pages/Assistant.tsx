@@ -31,6 +31,7 @@ export default function Assistant() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prefillHandled = useRef(false);
   const recognitionRef = useRef<any>(null);
+  const baseInputRef = useRef('');
 
   const toggleListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -45,6 +46,9 @@ export default function Assistant() {
       return;
     }
 
+    // Capture whatever is already typed as the base
+    baseInputRef.current = input;
+
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -52,14 +56,23 @@ export default function Assistant() {
     recognitionRef.current = recognition;
 
     recognition.onresult = (event: any) => {
-      let transcript = '';
+      let finalText = '';
+      let interimText = '';
       for (let i = 0; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalText += t;
+        } else {
+          interimText += t;
+        }
       }
-      setInput(prev => {
-        const base = prev.replace(/\s*$/, '');
-        return base ? base + ' ' + transcript : transcript;
-      });
+      const base = baseInputRef.current;
+      // Accumulate finalized chunks into the base
+      if (finalText) {
+        baseInputRef.current = (base ? base + ' ' : '') + finalText.trim();
+      }
+      const combined = baseInputRef.current + (interimText ? ' ' + interimText : '');
+      setInput(combined.trim());
     };
 
     recognition.onerror = () => setIsListening(false);
