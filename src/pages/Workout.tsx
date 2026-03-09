@@ -253,13 +253,13 @@ export default function WorkoutPage() {
 
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">
-                  {selectedWorkout.primaryUnit === 'km' ? 'Distance' : 'Reps'} ({selectedWorkout.primaryUnit})
+                  {selectedWorkout.primaryUnit === 'km' || selectedWorkout.primaryUnit === 'meters' ? 'Distance' : 'Reps'} ({selectedWorkout.primaryUnit})
                 </label>
                 <input
                   type="number"
                   value={targetValue}
                   onChange={(e) => setTargetValue(e.target.value)}
-                  placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : '10'}`}
+                  placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : selectedWorkout.primaryUnit === 'meters' ? '500' : '10'}`}
                   className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
