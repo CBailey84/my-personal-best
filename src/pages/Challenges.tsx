@@ -255,6 +255,9 @@ export default function Challenges() {
         <h1 className="font-heading text-3xl font-bold text-foreground">
           MY <span className="text-primary">CHALLENGES</span>
         </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Complete challenges to boost your stats!
+        </p>
         <div className="mt-3 flex items-center gap-3 rounded-xl border border-border bg-card p-4">
           <Trophy className="h-6 w-6 text-primary" />
           <div>
