@@ -40,6 +40,10 @@ export default function Goals() {
   const [secondaryValue, setSecondaryValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editTargetValue, setEditTargetValue] = useState('');
+  const [editSecondaryValue, setEditSecondaryValue] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const displayedGoals = useMemo(() => {
     return hideCompleted ? goals.filter((g) => !g.completed) : goals;
