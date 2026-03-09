@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot } from 'lucide-react';
+import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot, Pencil, Trash2 } from 'lucide-react';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', secondaryUnit: 'min' },
@@ -40,6 +40,10 @@ export default function Goals() {
   const [secondaryValue, setSecondaryValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editTargetValue, setEditTargetValue] = useState('');
+  const [editSecondaryValue, setEditSecondaryValue] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const displayedGoals = useMemo(() => {
     return hideCompleted ? goals.filter((g) => !g.completed) : goals;
@@ -95,6 +99,34 @@ export default function Goals() {
   };
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
+
+  const startEdit = (goal: Goal) => {
+    setEditingGoal(goal);
+    setEditTargetValue(String(goal.target_value));
+    setEditSecondaryValue(goal.secondary_value != null ? String(goal.secondary_value) : '');
+  };
+
+  const handleEdit = async () => {
+    if (!editingGoal || !editTargetValue) return;
+    setSaving(true);
+    await supabase
+      .from('goals')
+      .update({
+        target_value: parseFloat(editTargetValue),
+        secondary_value: editSecondaryValue ? parseFloat(editSecondaryValue) : null,
+      })
+      .eq('id', editingGoal.id);
+    await loadGoals();
+    setEditingGoal(null);
+    setSaving(false);
+  };
+
+  const handleDelete = async (goalId: string) => {
+    setDeleting(goalId);
+    await supabase.from('goals').delete().eq('id', goalId);
+    await loadGoals();
+    setDeleting(null);
+  };
 
   const askCoach = (goal: Goal) => {
     const workout = getWorkout(goal.workout_type);
@@ -242,24 +274,39 @@ export default function Goals() {
                   )}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => askCoach(goal)}
                   title="Ask AI Coach"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary"
                 >
-                  <Bot className="h-5 w-5" />
+                  <Bot className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => startEdit(goal)}
+                  title="Edit Goal"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-accent hover:bg-accent/10 hover:text-accent-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(goal.id)}
+                  disabled={deleting === goal.id}
+                  title="Delete Goal"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => toggleComplete(goal)}
                   title="Completed"
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all ${
                     goal.completed
                       ? 'border-primary/40 bg-primary/20 text-primary'
                       : 'border-border hover:border-primary hover:bg-primary/10'
                   }`}
                 >
-                  {goal.completed && <Check className="h-5 w-5" />}
+                  {goal.completed && <Check className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -273,6 +320,64 @@ export default function Goals() {
           </div>
         )}
       </div>
+
+      {/* Edit Goal Modal */}
+      {editingGoal && (() => {
+        const workout = getWorkout(editingGoal.workout_type);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingGoal(null)}>
+            <div className="w-full max-w-sm animate-slide-up rounded-xl border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-heading text-lg font-semibold text-foreground">Edit Goal</h3>
+                <button onClick={() => setEditingGoal(null)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mb-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                <span className="font-medium text-foreground">{workout?.label ?? editingGoal.workout_type}</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    Target ({editingGoal.target_unit})
+                  </label>
+                  <input
+                    type="number"
+                    value={editTargetValue}
+                    onChange={(e) => setEditTargetValue(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {editingGoal.secondary_unit && (
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">
+                      {editingGoal.secondary_unit === 'min' ? 'Target Time' : editingGoal.secondary_unit === 'sec' ? 'Duration' : 'Weight'} ({editingGoal.secondary_unit})
+                    </label>
+                    <input
+                      type="number"
+                      value={editSecondaryValue}
+                      onChange={(e) => setEditSecondaryValue(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                <button
+                  onClick={handleEdit}
+                  disabled={!editTargetValue || saving}
+                  className="w-full rounded-lg bg-primary py-3 font-heading font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
