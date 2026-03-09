@@ -102,6 +102,7 @@ export default function WorkoutPage() {
     setResultValue('');
     setSearch('');
     setWorkoutDate(format(new Date(), 'yyyy-MM-dd'));
+    setUseSeconds(false);
   };
 
   const handleDelete = async (id: string) => {
