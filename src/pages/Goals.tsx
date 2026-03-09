@@ -31,6 +31,7 @@ interface Goal {
 
 export default function Goals() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
@@ -234,16 +235,26 @@ export default function Goals() {
                   )}
                 </p>
               </div>
-              <button
-                onClick={() => toggleComplete(goal)}
-                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
-                  goal.completed
-                    ? 'border-primary/40 bg-primary/20 text-primary'
-                    : 'border-border hover:border-primary hover:bg-primary/10'
-                }`}
-              >
-                {goal.completed && <Check className="h-5 w-5" />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => askCoach(goal)}
+                  title="Ask AI Coach"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary"
+                >
+                  <Bot className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => toggleComplete(goal)}
+                  title="Completed"
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
+                    goal.completed
+                      ? 'border-primary/40 bg-primary/20 text-primary'
+                      : 'border-border hover:border-primary hover:bg-primary/10'
+                  }`}
+                >
+                  {goal.completed && <Check className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
           );
         })}
