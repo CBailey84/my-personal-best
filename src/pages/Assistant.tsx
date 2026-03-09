@@ -22,11 +22,13 @@ const STARTERS = [
 export default function Assistant() {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prefillHandled = useRef(false);
 
   useEffect(() => {
     if (scrollRef.current) {
