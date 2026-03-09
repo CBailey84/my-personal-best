@@ -89,6 +89,10 @@ const CHALLENGES: Challenge[] = [
   { id: 'squat-bb-30', title: 'Complete 10 reps of barbell squats with 30kg', stat: 'leg_power', uplift: 5, category: 'Squats' },
   { id: 'squat-bb-40', title: 'Complete 10 reps of barbell squats with 40kg', stat: 'leg_power', uplift: 10, category: 'Squats' },
   { id: 'squat-bb-bw', title: 'Complete 10 reps of barbell squats + bodyweight', stat: 'leg_power', uplift: 20, category: 'Squats' },
+  // Swimming
+  { id: 'swim-500m', title: 'Swim 500 meters without stopping', stat: 'stamina', uplift: 7, category: 'Swimming' },
+  { id: 'swim-1000m', title: 'Swim 1000 meters without stopping', stat: 'stamina', uplift: 12, category: 'Swimming' },
+  { id: 'swim-2000m', title: 'Swim 2000 meters without stopping', stat: 'stamina', uplift: 20, category: 'Swimming' },
 ];
 
 const STAT_LABELS: Record<string, string> = {

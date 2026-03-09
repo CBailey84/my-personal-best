@@ -16,6 +16,7 @@ const WORKOUTS = [
   { id: 'seated-row', label: 'Seated Row', icon: '🚣', primaryUnit: 'reps', secondaryUnit: 'kg' },
   { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', secondaryUnit: 'sec' },
   { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', secondaryUnit: 'min' },
 ];
 
 interface Goal {
