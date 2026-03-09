@@ -70,13 +70,18 @@ export default function WorkoutPage() {
     if (!selectedWorkout || !targetValue || !resultValue) return;
     setSaving(true);
 
+    const isTimeResult = selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec';
+    const finalResultValue = isTimeResult && useSeconds
+      ? parseFloat(resultValue) / 60
+      : parseFloat(resultValue);
+
     const { error } = await supabase.from('workouts').insert({
       user_id: user!.id,
       workout_type: selectedWorkout.id,
       target_value: parseFloat(targetValue),
       target_unit: selectedWorkout.primaryUnit,
-      result_value: parseFloat(resultValue),
-      result_unit: selectedWorkout.resultUnit,
+      result_value: finalResultValue,
+      result_unit: 'min',
       workout_date: workoutDate,
     });
 
