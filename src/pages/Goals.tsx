@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot } from 'lucide-react';
+import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot, Pencil, Trash2 } from 'lucide-react';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', secondaryUnit: 'min' },
