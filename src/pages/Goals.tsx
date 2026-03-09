@@ -274,24 +274,39 @@ export default function Goals() {
                   )}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => askCoach(goal)}
                   title="Ask AI Coach"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary"
                 >
-                  <Bot className="h-5 w-5" />
+                  <Bot className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => startEdit(goal)}
+                  title="Edit Goal"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-accent hover:bg-accent/10 hover:text-accent-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(goal.id)}
+                  disabled={deleting === goal.id}
+                  title="Delete Goal"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:border-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => toggleComplete(goal)}
                   title="Completed"
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all ${
                     goal.completed
                       ? 'border-primary/40 bg-primary/20 text-primary'
                       : 'border-border hover:border-primary hover:bg-primary/10'
                   }`}
                 >
-                  {goal.completed && <Check className="h-5 w-5" />}
+                  {goal.completed && <Check className="h-4 w-4" />}
                 </button>
               </div>
             </div>
