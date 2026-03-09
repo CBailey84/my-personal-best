@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,9 +26,48 @@ export default function Assistant() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prefillHandled = useRef(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: 'Not supported', description: 'Speech recognition is not available in this browser.', variant: 'destructive' });
+      return;
+    }
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(prev => {
+        const base = prev.replace(/\s*$/, '');
+        return base ? base + ' ' + transcript : transcript;
+      });
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
+    setIsListening(true);
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -224,6 +263,14 @@ export default function Assistant() {
           className="min-h-[44px] max-h-[120px] resize-none rounded-xl bg-secondary border-border"
           rows={1}
         />
+        <Button
+          onClick={toggleListening}
+          variant={isListening ? 'destructive' : 'outline'}
+          size="icon"
+          className="h-[44px] w-[44px] shrink-0 rounded-xl"
+        >
+          {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+        </Button>
         <Button
           onClick={() => send(input)}
           disabled={!input.trim() || isLoading}
