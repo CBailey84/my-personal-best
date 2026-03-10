@@ -68,6 +68,53 @@ export default function WorkoutPage() {
     setLoading(false);
   };
 
+  const checkAndCompleteGoals = async (workoutType: string, targetVal: number, targetUnit: string, resultVal: number) => {
+    // Fetch uncompleted goals for this workout type
+    const { data: openGoals } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('user_id', user!.id)
+      .eq('workout_type', workoutType)
+      .eq('completed', false);
+
+    if (!openGoals || openGoals.length === 0) return;
+
+    const completedGoalNames: string[] = [];
+
+    for (const goal of openGoals) {
+      // Check primary: workout target >= goal target (reps/distance met)
+      const primaryMet = targetVal >= goal.target_value;
+      if (!primaryMet) continue;
+
+      // Check secondary if present
+      if (goal.secondary_value != null && goal.secondary_unit) {
+        const isTimeBased = goal.secondary_unit === 'min' || goal.secondary_unit === 'sec';
+        // For time: lower is better. For weight: higher is better.
+        const secondaryMet = isTimeBased
+          ? resultVal <= goal.secondary_value
+          : resultVal >= goal.secondary_value;
+        if (!secondaryMet) continue;
+      }
+
+      // Goal met! Mark as completed
+      await supabase
+        .from('goals')
+        .update({ completed: true, completed_at: new Date().toISOString() })
+        .eq('id', goal.id);
+
+      const w = WORKOUTS.find((wk) => wk.id === goal.workout_type);
+      completedGoalNames.push(w?.label ?? goal.workout_type);
+    }
+
+    if (completedGoalNames.length > 0) {
+      setShowFireworks(true);
+      toast({
+        title: '🎉 Goal Achieved!',
+        description: `You completed: ${completedGoalNames.join(', ')}`,
+      });
+    }
+  };
+
   const handleAdd = async () => {
     if (!selectedWorkout || !targetValue || !resultValue) return;
     setSaving(true);
@@ -92,6 +139,13 @@ export default function WorkoutPage() {
     } else {
       toast({ title: '💪 Workout logged!' });
       await loadWorkouts();
+      // Check if this workout completes any goals
+      await checkAndCompleteGoals(
+        selectedWorkout.id,
+        parseFloat(targetValue),
+        selectedWorkout.primaryUnit,
+        finalResultValue
+      );
       resetForm();
     }
     setSaving(false);
