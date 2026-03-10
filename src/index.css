@@ -96,3 +96,14 @@
     @apply bg-primary rounded-full transition-all duration-700 ease-out;
   }
 }
+
+@keyframes firework-particle {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--fw-tx), var(--fw-ty)) scale(0.2);
+  }
+}
