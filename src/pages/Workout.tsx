@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Plus, X, Search, Dumbbell, CalendarIcon, Pencil, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from 'date-fns';
+import Fireworks from '@/components/Fireworks';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min' },
