@@ -51,6 +51,7 @@ export default function WorkoutPage() {
   const [editResultValue, setEditResultValue] = useState('');
   const [editDate, setEditDate] = useState('');
   const [useSeconds, setUseSeconds] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
 
   useEffect(() => {
     if (user) loadWorkouts();
