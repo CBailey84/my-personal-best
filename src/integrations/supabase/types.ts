@@ -168,44 +168,41 @@ export type Database = {
         Relationships: []
       }
       workouts: {
-  Row: {
-    created_at: string
-    id: string
-    result_unit: string
-    result_value: number
-    sets: number | null
-    target_unit: string
-    target_value: number
-    user_id: string
-    workout_date: string
-    workout_type: string
-  }
-  Insert: {
-    created_at?: string
-    id?: string
-    result_unit: string
-    result_value: number
-    sets?: number | null
-    target_unit: string
-    target_value: number
-    user_id: string
-    workout_date?: string
-    workout_type: string
-  }
-  Update: {
-    created_at?: string
-    id?: string
-    result_unit?: string
-    result_value?: number
-    sets?: number | null
-    target_unit?: string
-    target_value?: number
-    user_id?: string
-    workout_date?: string
-    workout_type?: string
-  }
-  Relationships: []
-}
+        Row: {
+          created_at: string
+          id: string
+          result_unit: string
+          result_value: number
+          target_unit: string
+          target_value: number
+          user_id: string
+          workout_date: string
+          workout_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          result_unit: string
+          result_value: number
+          target_unit: string
+          target_value: number
+          user_id: string
+          workout_date?: string
+          workout_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          result_unit?: string
+          result_value?: number
+          target_unit?: string
+          target_value?: number
+          user_id?: string
+          workout_date?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
