@@ -136,7 +136,7 @@ export default function WorkoutPage() {
       target_value: parseFloat(targetValue),
       target_unit: selectedWorkout.primaryUnit,
       result_value: finalResultValue,
-      result_unit: selectedWorkout.resultUnit,
+      result_unit: 'min',
       sets: needsSetsInput ? parseInt(setsValue, 10) : null,
       workout_date: workoutDate,
     });
@@ -395,7 +395,94 @@ export default function WorkoutPage() {
         </div>
       )}
 
-      <div className="relative mb-4">
+      {selectedDates.size > 0 && (
+        <div className="mt-8 mb-2 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            Filtering by {selectedDates.size} day{selectedDates.size > 1 ? 's' : ''}
+          </span>
+          <button
+            onClick={() => setSelectedDates(new Set())}
+            className="text-xs text-primary hover:underline"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
+
+      <div className={`${selectedDates.size > 0 ? 'mt-0' : 'mt-8'} rounded-xl border border-border bg-card p-4`}>
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
+            className="rounded-lg px-3 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            ‹
+          </button>
+          <h3 className="font-heading text-lg font-semibold text-foreground">
+            {format(calendarMonth, 'MMMM yyyy')}
+          </h3>
+          <button
+            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
+            className="rounded-lg px-3 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="mb-2 grid grid-cols-7 text-center">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+            <span key={d} className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              {d}
+            </span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: startDayOfWeek }).map((_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+          {daysInMonth.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const hasWorkout = workoutDates.has(dateStr);
+            const isToday = isSameDay(day, new Date());
+            const isSelected = selectedDates.has(dateStr);
+
+            return (
+              <button
+                key={dateStr}
+                onClick={() => {
+                  if (!hasWorkout) return;
+                  setSelectedDates((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(dateStr)) {
+                      next.delete(dateStr);
+                    } else {
+                      next.add(dateStr);
+                    }
+                    return next;
+                  });
+                }}
+                disabled={!hasWorkout}
+                className={`flex h-9 items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary/50'
+                    : hasWorkout
+                    ? 'bg-primary/20 text-primary font-bold cursor-pointer hover:bg-primary/30'
+                    : isToday
+                    ? 'border border-border text-foreground'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {day.getDate()}
+                {hasWorkout && !isSelected && (
+                  <span className="ml-0.5 text-[8px]">●</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="relative mb-4 mt-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           value={listSearch}
@@ -517,93 +604,6 @@ export default function WorkoutPage() {
             <p className="text-muted-foreground">No workouts logged yet. Start tracking!</p>
           </div>
         )}
-      </div>
-
-      {selectedDates.size > 0 && (
-        <div className="mt-8 mb-2 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Filtering by {selectedDates.size} day{selectedDates.size > 1 ? 's' : ''}
-          </span>
-          <button
-            onClick={() => setSelectedDates(new Set())}
-            className="text-xs text-primary hover:underline"
-          >
-            Clear filter
-          </button>
-        </div>
-      )}
-
-      <div className={`${selectedDates.size > 0 ? 'mt-0' : 'mt-8'} rounded-xl border border-border bg-card p-4`}>
-        <div className="mb-4 flex items-center justify-between">
-          <button
-            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
-            className="rounded-lg px-3 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
-          >
-            ‹
-          </button>
-          <h3 className="font-heading text-lg font-semibold text-foreground">
-            {format(calendarMonth, 'MMMM yyyy')}
-          </h3>
-          <button
-            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
-            className="rounded-lg px-3 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
-          >
-            ›
-          </button>
-        </div>
-
-        <div className="mb-2 grid grid-cols-7 text-center">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <span key={d} className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              {d}
-            </span>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: startDayOfWeek }).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
-          {daysInMonth.map((day) => {
-            const dateStr = format(day, 'yyyy-MM-dd');
-            const hasWorkout = workoutDates.has(dateStr);
-            const isToday = isSameDay(day, new Date());
-            const isSelected = selectedDates.has(dateStr);
-
-            return (
-              <button
-                key={dateStr}
-                onClick={() => {
-                  if (!hasWorkout) return;
-                  setSelectedDates((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(dateStr)) {
-                      next.delete(dateStr);
-                    } else {
-                      next.add(dateStr);
-                    }
-                    return next;
-                  });
-                }}
-                disabled={!hasWorkout}
-                className={`flex h-9 items-center justify-center rounded-lg text-xs font-medium transition-colors ${
-                  isSelected
-                    ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary/50'
-                    : hasWorkout
-                    ? 'bg-primary/20 text-primary font-bold cursor-pointer hover:bg-primary/30'
-                    : isToday
-                    ? 'border border-border text-foreground'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {day.getDate()}
-                {hasWorkout && !isSelected && (
-                  <span className="ml-0.5 text-[8px]">●</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );
