@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, X, Search, Dumbbell, CalendarIcon, Pencil, Trash2 } from 'lucide-react';
+import { Plus, X, Search, Dumbbell, Pencil, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from 'date-fns';
 import Fireworks from '@/components/Fireworks';
@@ -21,6 +21,8 @@ const WORKOUTS = [
   { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', resultUnit: 'min' },
 ];
 
+const CARDIO_WORKOUT_IDS = new Set(['run', 'bike', 'swim']);
+
 interface Workout {
   id: string;
   workout_type: string;
@@ -28,6 +30,7 @@ interface Workout {
   target_unit: string;
   result_value: number;
   result_unit: string;
+  sets: number | null;
   workout_date: string;
   created_at: string;
 }
@@ -42,6 +45,7 @@ export default function WorkoutPage() {
   const [selectedWorkout, setSelectedWorkout] = useState<typeof WORKOUTS[0] | null>(null);
   const [targetValue, setTargetValue] = useState('');
   const [resultValue, setResultValue] = useState('');
+  const [setsValue, setSetsValue] = useState('');
   const [workoutDate, setWorkoutDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [saving, setSaving] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -49,6 +53,7 @@ export default function WorkoutPage() {
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const [editTargetValue, setEditTargetValue] = useState('');
   const [editResultValue, setEditResultValue] = useState('');
+  const [editSetsValue, setEditSetsValue] = useState('');
   const [editDate, setEditDate] = useState('');
   const [useSeconds, setUseSeconds] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
@@ -64,12 +69,12 @@ export default function WorkoutPage() {
       .eq('user_id', user!.id)
       .order('workout_date', { ascending: false })
       .order('created_at', { ascending: false });
+
     if (data) setWorkouts(data as Workout[]);
     setLoading(false);
   };
 
-  const checkAndCompleteGoals = async (workoutType: string, targetVal: number, targetUnit: string, resultVal: number) => {
-    // Fetch uncompleted goals for this workout type
+  const checkAndCompleteGoals = async (workoutType: string, targetVal: number, resultVal: number) => {
     const { data: openGoals } = await supabase
       .from('goals')
       .select('*')
@@ -82,21 +87,17 @@ export default function WorkoutPage() {
     const completedGoalNames: string[] = [];
 
     for (const goal of openGoals) {
-      // Check primary: workout target >= goal target (reps/distance met)
       const primaryMet = targetVal >= goal.target_value;
       if (!primaryMet) continue;
 
-      // Check secondary if present
       if (goal.secondary_value != null && goal.secondary_unit) {
         const isTimeBased = goal.secondary_unit === 'min' || goal.secondary_unit === 'sec';
-        // For time: lower is better. For weight: higher is better.
         const secondaryMet = isTimeBased
           ? resultVal <= goal.secondary_value
           : resultVal >= goal.secondary_value;
         if (!secondaryMet) continue;
       }
 
-      // Goal met! Mark as completed
       await supabase
         .from('goals')
         .update({ completed: true, completed_at: new Date().toISOString() })
@@ -115,8 +116,13 @@ export default function WorkoutPage() {
     }
   };
 
+  const needsSetsInput = selectedWorkout ? !CARDIO_WORKOUT_IDS.has(selectedWorkout.id) : false;
+  const editNeedsSetsInput = editingWorkout ? !CARDIO_WORKOUT_IDS.has(editingWorkout.workout_type) : false;
+
   const handleAdd = async () => {
     if (!selectedWorkout || !targetValue || !resultValue) return;
+    if (needsSetsInput && !setsValue) return;
+
     setSaving(true);
 
     const isTimeResult = selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec';
@@ -131,6 +137,7 @@ export default function WorkoutPage() {
       target_unit: selectedWorkout.primaryUnit,
       result_value: finalResultValue,
       result_unit: 'min',
+      sets: needsSetsInput ? parseInt(setsValue, 10) : null,
       workout_date: workoutDate,
     });
 
@@ -139,15 +146,10 @@ export default function WorkoutPage() {
     } else {
       toast({ title: '💪 Workout logged!' });
       await loadWorkouts();
-      // Check if this workout completes any goals
-      await checkAndCompleteGoals(
-        selectedWorkout.id,
-        parseFloat(targetValue),
-        selectedWorkout.primaryUnit,
-        finalResultValue
-      );
+      await checkAndCompleteGoals(selectedWorkout.id, parseFloat(targetValue), finalResultValue);
       resetForm();
     }
+
     setSaving(false);
   };
 
@@ -156,6 +158,7 @@ export default function WorkoutPage() {
     setSelectedWorkout(null);
     setTargetValue('');
     setResultValue('');
+    setSetsValue('');
     setSearch('');
     setWorkoutDate(format(new Date(), 'yyyy-MM-dd'));
     setUseSeconds(false);
@@ -175,16 +178,21 @@ export default function WorkoutPage() {
     setEditingWorkout(w);
     setEditTargetValue(String(w.target_value));
     setEditResultValue(String(w.result_value));
+    setEditSetsValue(w.sets != null ? String(w.sets) : '');
     setEditDate(w.workout_date);
   };
 
   const handleEditSave = async () => {
     if (!editingWorkout) return;
+    if (editNeedsSetsInput && !editSetsValue) return;
+
     const { error } = await supabase.from('workouts').update({
       target_value: parseFloat(editTargetValue),
       result_value: parseFloat(editResultValue),
+      sets: editNeedsSetsInput ? parseInt(editSetsValue, 10) : null,
       workout_date: editDate,
     }).eq('id', editingWorkout.id);
+
     if (error) {
       toast({ title: 'Error updating workout', description: error.message, variant: 'destructive' });
     } else {
@@ -215,7 +223,6 @@ export default function WorkoutPage() {
     return list;
   }, [workouts, listSearch, selectedDates]);
 
-  // Calendar data
   const workoutDates = useMemo(() => {
     const dates = new Set<string>();
     workouts.forEach((w) => dates.add(w.workout_date));
@@ -238,7 +245,7 @@ export default function WorkoutPage() {
   return (
     <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
       {showFireworks && <Fireworks onDone={() => setShowFireworks(false)} />}
-      {/* Header */}
+
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold text-foreground">
           MY <span className="text-primary">WORKOUTS</span>
@@ -251,7 +258,6 @@ export default function WorkoutPage() {
         </button>
       </div>
 
-      {/* Add Workout Form */}
       {showForm && (
         <div className="mb-6 animate-slide-up rounded-xl border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
@@ -321,6 +327,21 @@ export default function WorkoutPage() {
                 />
               </div>
 
+              {needsSetsInput && (
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Sets</label>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={setsValue}
+                    onChange={(e) => setSetsValue(e.target.value)}
+                    placeholder="e.g. 3"
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+
               {(selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec') ? (
                 <div>
                   <div className="mb-1 flex items-center gap-2">
@@ -364,7 +385,7 @@ export default function WorkoutPage() {
 
               <button
                 onClick={handleAdd}
-                disabled={!targetValue || !resultValue || saving}
+                disabled={!targetValue || !resultValue || (needsSetsInput && !setsValue) || saving}
                 className="w-full rounded-lg bg-primary py-3 font-heading font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
               >
                 {saving ? 'Saving...' : '💪 Log Workout'}
@@ -374,7 +395,6 @@ export default function WorkoutPage() {
         </div>
       )}
 
-      {/* Search logged workouts */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -385,15 +405,13 @@ export default function WorkoutPage() {
         />
       </div>
 
-      {/* Workout List */}
       <div className="space-y-3">
         {filteredWorkouts.map((w) => {
           const workout = getWorkout(w.workout_type);
+          const showSets = !CARDIO_WORKOUT_IDS.has(w.workout_type);
+
           return (
-            <div
-              key={w.id}
-              className="rounded-xl border border-border bg-card p-4 transition-all"
-            >
+            <div key={w.id} className="rounded-xl border border-border bg-card p-4 transition-all">
               {editingWorkout?.id === w.id ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
@@ -402,21 +420,55 @@ export default function WorkoutPage() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs text-muted-foreground">Date</label>
-                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="mb-1 block text-xs text-muted-foreground">{w.target_unit}</label>
-                      <input type="number" value={editTargetValue} onChange={(e) => setEditTargetValue(e.target.value)} className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+                      <input
+                        type="number"
+                        value={editTargetValue}
+                        onChange={(e) => setEditTargetValue(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-muted-foreground">{w.result_unit}</label>
-                      <input type="number" value={editResultValue} onChange={(e) => setEditResultValue(e.target.value)} className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+                      <input
+                        type="number"
+                        value={editResultValue}
+                        onChange={(e) => setEditResultValue(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                     </div>
                   </div>
+
+                  {editNeedsSetsInput && (
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">Sets</label>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={editSetsValue}
+                        onChange={(e) => setEditSetsValue(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
-                    <button onClick={handleEditSave} className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">Save</button>
-                    <button onClick={() => setEditingWorkout(null)} className="flex-1 rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary">Cancel</button>
+                    <button onClick={handleEditSave} className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                      Save
+                    </button>
+                    <button onClick={() => setEditingWorkout(null)} className="flex-1 rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary">
+                      Cancel
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -430,6 +482,12 @@ export default function WorkoutPage() {
                       {w.target_value} {w.target_unit}
                       <span className="mx-1.5 text-border">·</span>
                       {w.result_value} {w.result_unit}
+                      {showSets && w.sets != null && (
+                        <>
+                          <span className="mx-1.5 text-border">·</span>
+                          {w.sets} sets
+                        </>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -461,7 +519,6 @@ export default function WorkoutPage() {
         )}
       </div>
 
-      {/* Calendar View */}
       {selectedDates.size > 0 && (
         <div className="mt-8 mb-2 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
@@ -475,6 +532,7 @@ export default function WorkoutPage() {
           </button>
         </div>
       )}
+
       <div className={`${selectedDates.size > 0 ? 'mt-0' : 'mt-8'} rounded-xl border border-border bg-card p-4`}>
         <div className="mb-4 flex items-center justify-between">
           <button
@@ -494,7 +552,6 @@ export default function WorkoutPage() {
           </button>
         </div>
 
-        {/* Day headers */}
         <div className="mb-2 grid grid-cols-7 text-center">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
             <span key={d} className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -503,7 +560,6 @@ export default function WorkoutPage() {
           ))}
         </div>
 
-        {/* Days */}
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: startDayOfWeek }).map((_, i) => (
             <div key={`empty-${i}`} />
@@ -513,6 +569,7 @@ export default function WorkoutPage() {
             const hasWorkout = workoutDates.has(dateStr);
             const isToday = isSameDay(day, new Date());
             const isSelected = selectedDates.has(dateStr);
+
             return (
               <button
                 key={dateStr}
