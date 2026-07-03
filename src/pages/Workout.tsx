@@ -136,7 +136,7 @@ export default function WorkoutPage() {
       target_value: parseFloat(targetValue),
       target_unit: selectedWorkout.primaryUnit,
       result_value: finalResultValue,
-      result_unit: 'min',
+      result_unit: selectedWorkout.resultUnit,
       sets: needsSetsInput ? parseInt(setsValue, 10) : null,
       workout_date: workoutDate,
     });
