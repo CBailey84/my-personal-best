@@ -70,7 +70,7 @@ export default function WorkoutPage() {
       .order('workout_date', { ascending: false })
       .order('created_at', { ascending: false });
 
-    if (data) setWorkouts(data as Workout[]);
+    if (data) setWorkouts(data as unknown as Workout[]);
     setLoading(false);
   };
 
