@@ -43,6 +43,7 @@ export default function PersonalBests() {
   const { user } = useAuth();
   const [allWorkouts, setAllWorkouts] = useState<WorkoutRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedWorkout, setSelectedWorkout] = useState<string>('all');
 
   useEffect(() => {
     if (user) loadWorkouts();
@@ -99,6 +100,11 @@ export default function PersonalBests() {
     return Array.from(map.values());
   }, [allWorkouts]);
 
+  const filteredPbs = useMemo(() => {
+    if (selectedWorkout === 'all') return pbs;
+    return pbs.filter((pb) => pb.workout_type === selectedWorkout);
+  }, [pbs, selectedWorkout]);
+
   const handleDelete = async (workoutId: string) => {
     const { error } = await supabase.from('workouts').delete().eq('id', workoutId);
 
@@ -137,9 +143,29 @@ export default function PersonalBests() {
         </p>
       </div>
 
+      {/* Workout Type Filter */}
+      <div className="mb-4">
+        <label htmlFor="workout-filter" className="mb-1 block text-xs text-muted-foreground">
+          Filter by workout type
+        </label>
+        <select
+          id="workout-filter"
+          value={selectedWorkout}
+          onChange={(e) => setSelectedWorkout(e.target.value)}
+          className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="all">All workout types</option>
+          {WORKOUTS.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.icon} {w.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* PB Tiles */}
       <div className="space-y-3">
-        {pbs.map((pb) => {
+        {filteredPbs.map((pb) => {
           const workout = getWorkout(pb.workout_type);
           const key = `${pb.source_workout_id}-${pb.workout_type}-${pb.target_value}-${pb.target_unit}`;
 
@@ -200,10 +226,14 @@ export default function PersonalBests() {
           );
         })}
 
-        {pbs.length === 0 && (
+        {filteredPbs.length === 0 && (
           <div className="flex flex-col items-center py-16 text-center">
             <span className="mb-3 text-5xl">🏆</span>
-            <p className="text-muted-foreground">No personal bests yet. Log workouts to see your records here!</p>
+            <p className="text-muted-foreground">
+              {selectedWorkout === 'all'
+                ? 'No personal bests yet. Log workouts to see your records here!'
+                : 'No personal bests found for this workout type yet.'}
+            </p>
           </div>
         )}
       </div>
