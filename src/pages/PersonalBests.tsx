@@ -49,10 +49,21 @@ export default function PersonalBests() {
   }, [user]);
 
   const loadWorkouts = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('workouts')
       .select('id, workout_type, target_value, target_unit, result_value, result_unit, workout_date')
       .eq('user_id', user!.id);
+
+    if (error) {
+      toast({
+        title: 'Error loading workouts',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+
     if (data) setAllWorkouts(data as WorkoutRecord[]);
     setLoading(false);
   };
@@ -65,11 +76,12 @@ export default function PersonalBests() {
       const key = `${w.workout_type}|${w.target_value}|${w.target_unit}`;
       const existing = map.get(key);
       const wkDef = WORKOUTS.find((wk) => wk.id === w.workout_type);
-      const isBetter = !existing || (
-        wkDef?.bestIs === 'lowest'
+
+      const isBetter =
+        !existing ||
+        (wkDef?.bestIs === 'lowest'
           ? w.result_value < existing.result_value
-          : w.result_value > existing.result_value
-      );
+          : w.result_value > existing.result_value);
 
       if (isBetter) {
         map.set(key, {
@@ -129,7 +141,8 @@ export default function PersonalBests() {
       <div className="space-y-3">
         {pbs.map((pb) => {
           const workout = getWorkout(pb.workout_type);
-          const key = `${pb.workout_type}-${pb.target_value}-${pb.target_unit}`;
+          const key = `${pb.source_workout_id}-${pb.workout_type}-${pb.target_value}-${pb.target_unit}`;
+
           return (
             <div
               key={key}
@@ -167,6 +180,7 @@ export default function PersonalBests() {
                   </p>
                   <p className="text-xs text-gold/60">{pb.result_unit}</p>
                   <button
+                    type="button"
                     onClick={() => handleDelete(pb.source_workout_id)}
                     className="ml-auto mt-2 rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     aria-label="Delete personal best"
