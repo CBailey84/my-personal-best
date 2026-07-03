@@ -173,6 +173,7 @@ export type Database = {
           id: string
           result_unit: string
           result_value: number
+          sets: number | null
           target_unit: string
           target_value: number
           user_id: string
@@ -184,6 +185,7 @@ export type Database = {
           id?: string
           result_unit: string
           result_value: number
+          sets?: number | null
           target_unit: string
           target_value: number
           user_id: string
@@ -195,6 +197,7 @@ export type Database = {
           id?: string
           result_unit?: string
           result_value?: number
+          sets?: number | null
           target_unit?: string
           target_value?: number
           user_id?: string
