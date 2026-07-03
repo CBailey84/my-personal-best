@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy } from 'lucide-react';
+import { Trophy, Trash2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
@@ -19,6 +20,7 @@ const WORKOUTS = [
 ];
 
 interface WorkoutRecord {
+  id: string;
   workout_type: string;
   target_value: number;
   target_unit: string;
@@ -28,6 +30,7 @@ interface WorkoutRecord {
 }
 
 interface PBEntry {
+  source_workout_id: string;
   workout_type: string;
   target_value: number;
   target_unit: string;
@@ -48,7 +51,7 @@ export default function PersonalBests() {
   const loadWorkouts = async () => {
     const { data } = await supabase
       .from('workouts')
-      .select('workout_type, target_value, target_unit, result_value, result_unit, workout_date')
+      .select('id, workout_type, target_value, target_unit, result_value, result_unit, workout_date')
       .eq('user_id', user!.id);
     if (data) setAllWorkouts(data as WorkoutRecord[]);
     setLoading(false);
@@ -70,6 +73,7 @@ export default function PersonalBests() {
 
       if (isBetter) {
         map.set(key, {
+          source_workout_id: w.id,
           workout_type: w.workout_type,
           target_value: w.target_value,
           target_unit: w.target_unit,
@@ -82,6 +86,22 @@ export default function PersonalBests() {
 
     return Array.from(map.values());
   }, [allWorkouts]);
+
+  const handleDelete = async (workoutId: string) => {
+    const { error } = await supabase.from('workouts').delete().eq('id', workoutId);
+
+    if (error) {
+      toast({
+        title: 'Error deleting personal best',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setAllWorkouts((prev) => prev.filter((w) => w.id !== workoutId));
+    toast({ title: 'Personal best deleted' });
+  };
 
   const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
 
@@ -146,6 +166,14 @@ export default function PersonalBests() {
                     {pb.result_value}
                   </p>
                   <p className="text-xs text-gold/60">{pb.result_unit}</p>
+                  <button
+                    onClick={() => handleDelete(pb.source_workout_id)}
+                    className="ml-auto mt-2 rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Delete personal best"
+                    title="Delete personal best"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
 
