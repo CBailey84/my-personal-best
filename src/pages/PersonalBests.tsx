@@ -46,196 +46,155 @@ export default function PersonalBests() {
   const [selectedWorkout, setSelectedWorkout] = useState<string>('all');
 
   useEffect(() => {
-    if (user) loadWorkouts();
+    if (!user) return;
+    loadWorkouts();
   }, [user]);
 
-  const loadWorkouts = async () => {
+  async function loadWorkouts() {
+    if (!user) return;
+    setLoading(true);
     const { data, error } = await supabase
       .from('workouts')
-      .select('id, workout_type, target_value, target_unit, result_value, result_unit, workout_date')
-      .eq('user_id', user!.id);
+      .select('*')
+      .eq('user_id', user.id)
+      .order('workout_date', { ascending: false });
 
     if (error) {
-      toast({
-        title: 'Error loading workouts',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error loading workouts', description: error.message, variant: 'destructive' });
       setLoading(false);
       return;
     }
 
-    if (data) setAllWorkouts(data as WorkoutRecord[]);
+    setAllWorkouts(data || []);
     setLoading(false);
-  };
+  }
 
-  // Derive PBs: best result per workout_type + target_value combo
-  const pbs = useMemo(() => {
-    const map = new Map<string, PBEntry>();
+  function getWorkoutMeta(workoutType: string) {
+    return WORKOUTS.find(w => w.id === workoutType);
+  }
 
-    allWorkouts.forEach((w) => {
-      const key = `${w.workout_type}|${w.target_value}|${w.target_unit}`;
-      const existing = map.get(key);
-      const wkDef = WORKOUTS.find((wk) => wk.id === w.workout_type);
+  function getWorkoutDisplayName(workoutType: string) {
+    const workout = getWorkoutMeta(workoutType);
+    return workout ? `${workout.icon} ${workout.label}` : workoutType;
+  }
 
-      const isBetter =
-        !existing ||
-        (wkDef?.bestIs === 'lowest'
-          ? w.result_value < existing.result_value
-          : w.result_value > existing.result_value);
+  function getWorkoutUnit(workoutType: string, unitType: 'target' | 'result') {
+    const workout = getWorkoutMeta(workoutType);
+    if (!workout) return '';
+    return unitType === 'target' ? workout.primaryUnit : workout.resultUnit;
+  }
 
-      if (isBetter) {
-        map.set(key, {
-          source_workout_id: w.id,
-          workout_type: w.workout_type,
-          target_value: w.target_value,
-          target_unit: w.target_unit,
-          result_value: w.result_value,
-          result_unit: w.result_unit,
-          workout_date: w.workout_date,
-        });
+  const pbEntries = useMemo(() => {
+    const byType = new Map<string, WorkoutRecord[]>();
+
+    for (const w of allWorkouts) {
+      if (selectedWorkout !== 'all' && w.workout_type !== selectedWorkout) continue;
+      if (!byType.has(w.workout_type)) byType.set(w.workout_type, []);
+      byType.get(w.workout_type)!.push(w);
+    }
+
+    const out: PBEntry[] = [];
+
+    for (const [type, list] of byType.entries()) {
+      const cfg = getWorkoutMeta(type);
+      if (!cfg || list.length === 0) continue;
+
+      let best: WorkoutRecord;
+      if (cfg.bestIs === 'lowest') {
+        best = list.reduce((acc, curr) => (curr.result_value < acc.result_value ? curr : acc));
+      } else {
+        best = list.reduce((acc, curr) => (curr.result_value > acc.result_value ? curr : acc));
       }
-    });
 
-    return Array.from(map.values());
-  }, [allWorkouts]);
+      out.push({
+        source_workout_id: best.id,
+        workout_type: best.workout_type,
+        target_value: best.target_value,
+        target_unit: best.target_unit,
+        result_value: best.result_value,
+        result_unit: best.result_unit,
+        workout_date: best.workout_date,
+      });
+    }
 
-  const filteredPbs = useMemo(() => {
-    if (selectedWorkout === 'all') return pbs;
-    return pbs.filter((pb) => pb.workout_type === selectedWorkout);
-  }, [pbs, selectedWorkout]);
+    return out.sort((a, b) => a.workout_type.localeCompare(b.workout_type));
+  }, [allWorkouts, selectedWorkout]);
 
-  const handleDelete = async (workoutId: string) => {
-    const { error } = await supabase.from('workouts').delete().eq('id', workoutId);
+  async function deletePB(pb: PBEntry) {
+    const { error } = await supabase
+      .from('workouts')
+      .delete()
+      .eq('id', pb.source_workout_id)
+      .eq('user_id', user?.id ?? '');
 
     if (error) {
-      toast({
-        title: 'Error deleting personal best',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Could not delete PB', description: error.message, variant: 'destructive' });
       return;
     }
 
-    setAllWorkouts((prev) => prev.filter((w) => w.id !== workoutId));
-    toast({ title: 'Personal best deleted' });
-  };
-
-  const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
-      </div>
-    );
+    toast({ title: 'PB deleted' });
+    await loadWorkouts();
   }
 
+  if (!user) return null;
+
   return (
-    <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="font-heading text-3xl font-bold text-foreground">
-          PERSONAL <span className="text-gold-light">BESTS</span>
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Automatically tracked from your logged workouts
-        </p>
-      </div>
+    <div className="min-h-screen pb-20 px-4 pt-6">
+      <div className="max-w-md mx-auto space-y-6">
+        <div className="text-center animate-slide-up">
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center justify-center gap-2">
+            <Trophy className="w-8 h-8 text-primary" />
+            Personal Bests
+          </h1>
+          <p className="text-muted-foreground">Your top performances by workout</p>
+        </div>
 
-      {/* Workout Type Filter */}
-      <div className="mb-4">
-        <label htmlFor="workout-filter" className="mb-1 block text-xs text-muted-foreground">
-          Filter by workout type
-        </label>
-        <select
-          id="workout-filter"
-          value={selectedWorkout}
-          onChange={(e) => setSelectedWorkout(e.target.value)}
-          className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="all">All workout types</option>
-          {WORKOUTS.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.icon} {w.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="bg-card border border-border rounded-xl p-4 animate-scale-in">
+          <label className="text-sm font-medium text-foreground mb-2 block">Filter workout</label>
+          <select
+            value={selectedWorkout}
+            onChange={(e) => setSelectedWorkout(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-input bg-background"
+          >
+            <option value="all">All workouts</option>
+            {WORKOUTS.map(w => (
+              <option key={w.id} value={w.id}>
+                {w.icon} {w.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* PB Tiles */}
-      <div className="space-y-3">
-        {filteredPbs.map((pb) => {
-          const workout = getWorkout(pb.workout_type);
-          const key = `${pb.source_workout_id}-${pb.workout_type}-${pb.target_value}-${pb.target_unit}`;
-
-          return (
-            <div
-              key={key}
-              className="relative overflow-hidden rounded-xl border border-gold/40 p-4"
-              style={{
-                background: 'linear-gradient(135deg, hsl(var(--gold) / 0.1), hsl(var(--card)), hsl(var(--gold) / 0.05))',
-                boxShadow: 'var(--gold-glow), inset 0 1px 0 hsl(var(--gold-light) / 0.1)',
-              }}
-            >
-              {/* Decorative shimmer */}
-              <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gold/10 blur-2xl" />
-              <div className="pointer-events-none absolute -left-2 -bottom-2 h-12 w-12 rounded-full bg-gold/5 blur-xl" />
-
-              <div className="relative flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/20 bg-gold/10 text-2xl">
-                  {workout?.icon ?? '🏅'}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-heading text-lg font-bold text-gold-light">
-                      {workout?.label ?? pb.workout_type}
-                    </h3>
-                    <Trophy className="h-4 w-4 text-gold" />
+        <div className="space-y-3">
+          {loading ? (
+            <div className="text-center text-muted-foreground py-8">Loading PBs...</div>
+          ) : pbEntries.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">No PBs yet. Log workouts to generate PBs.</div>
+          ) : (
+            pbEntries.map((pb) => (
+              <div key={pb.source_workout_id} className="bg-card border border-border rounded-xl p-4 animate-scale-in">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold text-foreground">{getWorkoutDisplayName(pb.workout_type)}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {pb.target_value}
+                      {getWorkoutUnit(pb.workout_type, 'target')} → {pb.result_value}
+                      {getWorkoutUnit(pb.workout_type, 'result')}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">{pb.workout_date}</div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {pb.target_value} {pb.target_unit}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p
-                    className="font-heading text-2xl font-bold text-gold"
-                    style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.4)' }}
-                  >
-                    {pb.result_value}
-                  </p>
-                  <p className="text-xs text-gold/60">{pb.result_unit}</p>
                   <button
-                    type="button"
-                    onClick={() => handleDelete(pb.source_workout_id)}
-                    className="ml-auto mt-2 rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    aria-label="Delete personal best"
-                    title="Delete personal best"
+                    onClick={() => deletePB(pb)}
+                    className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                    title="Delete PB source workout"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="w-4 h-4 text-destructive" />
                   </button>
                 </div>
               </div>
-
-              <div className="mt-2 text-right">
-                <span className="text-[10px] text-muted-foreground">
-                  {new Date(pb.workout_date).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-
-        {filteredPbs.length === 0 && (
-          <div className="flex flex-col items-center py-16 text-center">
-            <span className="mb-3 text-5xl">🏆</span>
-            <p className="text-muted-foreground">
-              {selectedWorkout === 'all'
-                ? 'No personal bests yet. Log workouts to see your records here!'
-                : 'No personal bests found for this workout type yet.'}
-            </p>
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
