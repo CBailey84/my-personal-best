@@ -45,643 +45,566 @@ export default function WorkoutPage() {
   const [selectedWorkout, setSelectedWorkout] = useState<typeof WORKOUTS[0] | null>(null);
   const [targetValue, setTargetValue] = useState('');
   const [resultValue, setResultValue] = useState('');
-  const [sets, setSets] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [setsValue, setSetsValue] = useState('');
+  const [workoutDate, setWorkoutDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [saving, setSaving] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const [editTargetValue, setEditTargetValue] = useState('');
   const [editResultValue, setEditResultValue] = useState('');
-  const [editSets, setEditSets] = useState('');
+  const [editSetsValue, setEditSetsValue] = useState('');
   const [editDate, setEditDate] = useState('');
-  const [editWorkoutType, setEditWorkoutType] = useState<string>('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [animationType, setAnimationType] = useState<'new' | 'pb'>('new');
+  const [useSeconds, setUseSeconds] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    loadWorkouts();
+    if (user) loadWorkouts();
   }, [user]);
 
-  async function loadWorkouts() {
-    if (!user) return;
-    setLoading(true);
-    const { data, error } = await supabase
+  const loadWorkouts = async () => {
+    const { data } = await supabase
       .from('workouts')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .order('workout_date', { ascending: false })
       .order('created_at', { ascending: false });
 
-    if (error) {
-      toast({ title: 'Error loading workouts', description: error.message, variant: 'destructive' });
-    } else {
-      setWorkouts(data || []);
-    }
+    if (data) setWorkouts(data as unknown as Workout[]);
     setLoading(false);
-  }
+  };
 
-  const filteredWorkouts = useMemo(() => {
-    const q = listSearch.trim().toLowerCase();
-    if (!q) return workouts;
-    return workouts.filter((w) =>
-      w.workout_type.toLowerCase().includes(q) ||
-      String(w.target_value).includes(q) ||
-      String(w.result_value).includes(q) ||
-      (w.target_unit || '').toLowerCase().includes(q) ||
-      (w.result_unit || '').toLowerCase().includes(q)
-    );
-  }, [workouts, listSearch]);
+  const checkAndCompleteGoals = async (workoutType: string, targetVal: number, resultVal: number) => {
+    const { data: openGoals } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('user_id', user!.id)
+      .eq('workout_type', workoutType)
+      .eq('completed', false);
 
-  const groupedByMonth = useMemo(() => {
-    const map = new Map<string, Workout[]>();
-    for (const w of filteredWorkouts) {
-      const month = format(parseISO(w.workout_date), 'yyyy-MM');
-      if (!map.has(month)) map.set(month, []);
-      map.get(month)!.push(w);
+    if (!openGoals || openGoals.length === 0) return;
+
+    const completedGoalNames: string[] = [];
+
+    for (const goal of openGoals) {
+      const primaryMet = targetVal >= goal.target_value;
+      if (!primaryMet) continue;
+
+      if (goal.secondary_value != null && goal.secondary_unit) {
+        const isTimeBased = goal.secondary_unit === 'min' || goal.secondary_unit === 'sec';
+        const secondaryMet = isTimeBased
+          ? resultVal <= goal.secondary_value
+          : resultVal >= goal.secondary_value;
+        if (!secondaryMet) continue;
+      }
+
+      await supabase
+        .from('goals')
+        .update({ completed: true, completed_at: new Date().toISOString() })
+        .eq('id', goal.id);
+
+      const w = WORKOUTS.find((wk) => wk.id === goal.workout_type);
+      completedGoalNames.push(w?.label ?? goal.workout_type);
     }
-    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [filteredWorkouts]);
 
-  const selectedMeta = selectedWorkout ? WORKOUTS.find((w) => w.id === selectedWorkout.id) : null;
+    if (completedGoalNames.length > 0) {
+      setShowFireworks(true);
+      toast({
+        title: '🎉 Goal Achieved!',
+        description: `You completed: ${completedGoalNames.join(', ')}`,
+      });
+    }
+  };
 
-  async function handleAddWorkout() {
-    if (!user || !selectedWorkout || !targetValue || !resultValue || !date) return;
-    const target = Number(targetValue);
-    const result = Number(resultValue);
-    const setsNum = sets ? Number(sets) : null;
-    if (Number.isNaN(target) || Number.isNaN(result)) return;
+  const needsSetsInput = selectedWorkout ? !CARDIO_WORKOUT_IDS.has(selectedWorkout.id) : false;
+  const editNeedsSetsInput = editingWorkout ? !CARDIO_WORKOUT_IDS.has(editingWorkout.workout_type) : false;
+
+  const handleAdd = async () => {
+    if (!selectedWorkout || !targetValue || !resultValue) return;
+    if (needsSetsInput && !setsValue) return;
 
     setSaving(true);
 
-    const targetUnit = selectedWorkout.primaryUnit;
-    const resultUnit = selectedWorkout.resultUnit;
+    const isTimeResult = selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec';
+    const finalResultValue = isTimeResult && useSeconds
+      ? parseFloat(resultValue) / 60
+      : parseFloat(resultValue);
 
     const { error } = await supabase.from('workouts').insert({
-      user_id: user.id,
+      user_id: user!.id,
       workout_type: selectedWorkout.id,
-      target_value: target,
-      target_unit: targetUnit,
-      result_value: result,
-      result_unit: resultUnit,
-      sets: setsNum,
-      workout_date: date,
+      target_value: parseFloat(targetValue),
+      target_unit: selectedWorkout.primaryUnit,
+      result_value: finalResultValue,
+      result_unit: 'min',
+      sets: needsSetsInput ? parseInt(setsValue, 10) : null,
+      workout_date: workoutDate,
     });
 
     if (error) {
-      toast({ title: 'Could not save workout', description: error.message, variant: 'destructive' });
-      setSaving(false);
-      return;
+      toast({ title: 'Error saving workout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: '💪 Workout logged!' });
+      await loadWorkouts();
+      await checkAndCompleteGoals(selectedWorkout.id, parseFloat(targetValue), finalResultValue);
+      resetForm();
     }
 
-    const workoutConfig = WORKOUTS.find(w => w.id === selectedWorkout.id);
-    if (workoutConfig) {
-      const sameTypeWorkouts = workouts.filter(w => w.workout_type === selectedWorkout.id);
-      const isCardio = CARDIO_WORKOUT_IDS.has(selectedWorkout.id);
-      
-      let isNewPB = false;
-      if (sameTypeWorkouts.length === 0) {
-        isNewPB = true;
-      } else if (isCardio) {
-        const bestTime = Math.min(...sameTypeWorkouts.map(w => w.result_value));
-        isNewPB = result < bestTime;
-      } else {
-        const bestWeight = Math.max(...sameTypeWorkouts.map(w => w.result_value));
-        isNewPB = result > bestWeight;
-      }
+    setSaving(false);
+  };
 
-      setAnimationType(isNewPB ? 'pb' : 'new');
-      setShowSuccessAnimation(true);
-    }
-
-    toast({ title: 'Workout saved 💪' });
+  const resetForm = () => {
     setShowForm(false);
     setSelectedWorkout(null);
     setTargetValue('');
     setResultValue('');
-    setSets('');
-    setDate(new Date().toISOString().slice(0, 10));
-    await loadWorkouts();
-    setSaving(false);
-  }
+    setSetsValue('');
+    setSearch('');
+    setWorkoutDate(format(new Date(), 'yyyy-MM-dd'));
+    setUseSeconds(false);
+  };
 
-  function startEdit(w: Workout) {
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('workouts').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Error deleting workout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Workout deleted' });
+      setWorkouts((prev) => prev.filter((w) => w.id !== id));
+    }
+  };
+
+  const startEdit = (w: Workout) => {
     setEditingWorkout(w);
     setEditTargetValue(String(w.target_value));
     setEditResultValue(String(w.result_value));
-    setEditSets(w.sets == null ? '' : String(w.sets));
+    setEditSetsValue(w.sets != null ? String(w.sets) : '');
     setEditDate(w.workout_date);
-    setEditWorkoutType(w.workout_type);
-  }
+  };
 
-  async function saveEdit() {
+  const handleEditSave = async () => {
     if (!editingWorkout) return;
-    const target = Number(editTargetValue);
-    const result = Number(editResultValue);
-    const setsNum = editSets ? Number(editSets) : null;
-    if (Number.isNaN(target) || Number.isNaN(result)) return;
+    if (editNeedsSetsInput && !editSetsValue) return;
 
-    const workoutMeta = WORKOUTS.find(w => w.id === editWorkoutType);
-    if (!workoutMeta) return;
-
-    const { error } = await supabase
-      .from('workouts')
-      .update({
-        workout_type: editWorkoutType,
-        target_value: target,
-        result_value: result,
-        sets: setsNum,
-        workout_date: editDate,
-        target_unit: workoutMeta.primaryUnit,
-        result_unit: workoutMeta.resultUnit,
-      })
-      .eq('id', editingWorkout.id)
-      .eq('user_id', user?.id ?? '');
+    const { error } = await supabase.from('workouts').update({
+      target_value: parseFloat(editTargetValue),
+      result_value: parseFloat(editResultValue),
+      sets: editNeedsSetsInput ? parseInt(editSetsValue, 10) : null,
+      workout_date: editDate,
+    }).eq('id', editingWorkout.id);
 
     if (error) {
-      toast({ title: 'Could not update workout', description: error.message, variant: 'destructive' });
-      return;
+      toast({ title: 'Error updating workout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Workout updated' });
+      await loadWorkouts();
+      setEditingWorkout(null);
     }
+  };
 
-    toast({ title: 'Workout updated' });
-    setEditingWorkout(null);
-    await loadWorkouts();
-  }
+  const getWorkout = (id: string) => WORKOUTS.find((w) => w.id === id);
 
-  function requestDelete(w: Workout) {
-    setWorkoutToDelete(w);
-    setShowDeleteConfirm(true);
-  }
-
-  async function confirmDelete() {
-    if (!workoutToDelete || !user) return;
-    
-    const { error } = await supabase
-      .from('workouts')
-      .delete()
-      .eq('id', workoutToDelete.id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      toast({ title: 'Could not delete workout', description: error.message, variant: 'destructive' });
-      return;
-    }
-
-    toast({ title: 'Workout deleted' });
-    setShowDeleteConfirm(false);
-    setWorkoutToDelete(null);
-    await loadWorkouts();
-  }
-
-  function cancelDelete() {
-    setShowDeleteConfirm(false);
-    setWorkoutToDelete(null);
-  }
-
-  function getWorkoutDisplayName(workoutType: string) {
-    const workout = WORKOUTS.find(w => w.id === workoutType);
-    return workout ? `${workout.icon} ${workout.label}` : workoutType;
-  }
-
-  function getWorkoutUnit(workoutType: string, unitType: 'target' | 'result') {
-    const workout = WORKOUTS.find(w => w.id === workoutType);
-    if (!workout) return '';
-    return unitType === 'target' ? workout.primaryUnit : workout.resultUnit;
-  }
-
-  const currentMonth = new Date();
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  
-  const workoutDaysThisMonth = new Set(
-    workouts
-      .filter(w => {
-        const workoutDate = parseISO(w.workout_date);
-        return workoutDate >= monthStart && workoutDate <= monthEnd;
-      })
-      .map(w => w.workout_date)
+  const filteredFormWorkouts = WORKOUTS.filter((w) =>
+    w.label.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalWorkoutsThisMonth = workouts.filter(w => {
-    const workoutDate = parseISO(w.workout_date);
-    return workoutDate >= monthStart && workoutDate <= monthEnd;
-  }).length;
-
-  const longestStreak = useMemo(() => {
-    if (workouts.length === 0) return 0;
-    
-    const sortedDates = [...new Set(workouts.map(w => w.workout_date))].sort();
-    let maxStreak = 1;
-    let currentStreak = 1;
-    
-    for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = parseISO(sortedDates[i - 1]);
-      const currDate = parseISO(sortedDates[i]);
-      const diffTime = currDate.getTime() - prevDate.getTime();
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
-      
-      if (diffDays === 1) {
-        currentStreak++;
-        maxStreak = Math.max(maxStreak, currentStreak);
-      } else {
-        currentStreak = 1;
-      }
+  const filteredWorkouts = useMemo(() => {
+    let list = workouts;
+    if (selectedDates.size > 0) {
+      list = list.filter((w) => selectedDates.has(w.workout_date));
     }
-    
-    return maxStreak;
+    if (listSearch) {
+      const q = listSearch.toLowerCase();
+      list = list.filter((w) => {
+        const wk = getWorkout(w.workout_type);
+        return (wk?.label ?? w.workout_type).toLowerCase().includes(q);
+      });
+    }
+    return list;
+  }, [workouts, listSearch, selectedDates]);
+
+  const workoutDates = useMemo(() => {
+    const dates = new Set<string>();
+    workouts.forEach((w) => dates.add(w.workout_date));
+    return dates;
   }, [workouts]);
 
-  const currentStreak = useMemo(() => {
-    if (workouts.length === 0) return 0;
-    
-    const sortedDates = [...new Set(workouts.map(w => w.workout_date))].sort().reverse();
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    
-    if (sortedDates[0] !== today && sortedDates[0] !== yesterday) return 0;
-    
-    let streak = 1;
-    for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = parseISO(sortedDates[i - 1]);
-      const currDate = parseISO(sortedDates[i]);
-      const diffTime = prevDate.getTime() - currDate.getTime();
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
-      
-      if (diffDays === 1) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    
-    return streak;
-  }, [workouts]);
+  const monthStart = startOfMonth(calendarMonth);
+  const monthEnd = endOfMonth(calendarMonth);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDayOfWeek = getDay(monthStart);
 
-  if (!user) return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen pb-20 px-4 pt-6">
-      {showSuccessAnimation && (
-        <Fireworks
-          show={showSuccessAnimation}
-          type={animationType}
-          onComplete={() => setShowSuccessAnimation(false)}
-        />
-      )}
-      
-      <div className="max-w-md mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center animate-slide-up">
-          <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center justify-center gap-2">
-            <Dumbbell className="w-8 h-8 text-primary" />
-            Workouts
-          </h1>
-          <p className="text-muted-foreground">Track your fitness journey</p>
-        </div>
+    <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
+      {showFireworks && <Fireworks onDone={() => setShowFireworks(false)} />}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4 animate-slide-up">
-          <div className="bg-gradient-primary rounded-xl p-4 text-primary-foreground">
-            <div className="text-2xl font-bold">{totalWorkoutsThisMonth}</div>
-            <div className="text-sm opacity-90">This Month</div>
-          </div>
-          <div className="bg-gradient-success rounded-xl p-4 text-success-foreground">
-            <div className="text-2xl font-bold">{currentStreak}</div>
-            <div className="text-sm opacity-90">Current Streak</div>
-          </div>
-        </div>
-
-        {/* Calendar Heatmap */}
-        <div className="bg-card border border-border rounded-xl p-4 animate-slide-up">
-          <h3 className="font-semibold mb-3">This Month's Activity</h3>
-          <div className="grid grid-cols-7 gap-1">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-              <div key={day} className="text-xs text-muted-foreground text-center p-1">
-                {day}
-              </div>
-            ))}
-            {Array.from({ length: getDay(monthStart) }).map((_, i) => (
-              <div key={`empty-${i}`} className="w-8 h-8" />
-            ))}
-            {daysInMonth.map(day => {
-              const dateStr = format(day, 'yyyy-MM-dd');
-              const hasWorkout = workoutDaysThisMonth.has(dateStr);
-              const isToday = isSameDay(day, new Date());
-              
-              return (
-                <div
-                  key={dateStr}
-                  className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-medium transition-all ${
-                    hasWorkout
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  } ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-                >
-                  {format(day, 'd')}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Add Workout Button */}
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-heading text-3xl font-bold text-foreground">
+          MY <span className="text-primary">WORKOUTS</span>
+        </h1>
         <button
-          onClick={() => setShowForm(v => !v)}
-          className="w-full bg-gradient-primary text-primary-foreground rounded-xl py-4 px-6 font-semibold flex items-center justify-center gap-2 shadow-medium hover:shadow-strong transform hover:-translate-y-0.5 transition-all duration-200 animate-slide-up"
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90"
         >
-          <Plus className="w-5 h-5" />
-          Add Workout
+          <Plus className="h-4 w-4" /> Log Workout
         </button>
+      </div>
 
-        {/* Add Workout Form */}
-        {showForm && (
-          <div className="bg-card border border-border rounded-xl p-4 space-y-4 animate-scale-in">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-foreground">New Workout</h2>
-              <button
-                onClick={() => setShowForm(false)}
-                className="p-1 rounded-lg hover:bg-muted transition-colors"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Workout Type</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                  <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search workouts..."
-                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-background"
-                  />
-                </div>
-                <div className="mt-2 max-h-40 overflow-auto rounded-lg border border-border">
-                  {WORKOUTS.filter(w => w.label.toLowerCase().includes(search.toLowerCase())).map(w => (
-                    <button
-                      key={w.id}
-                      onClick={() => {
-                        setSelectedWorkout(w);
-                        setSearch(w.label);
-                      }}
-                      className={`w-full text-left px-3 py-2 hover:bg-muted transition-colors ${
-                        selectedWorkout?.id === w.id ? 'bg-muted' : ''
-                      }`}
-                    >
-                      {w.icon} {w.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {selectedWorkout && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-1 block">
-                        Target ({selectedMeta?.primaryUnit})
-                      </label>
-                      <input
-                        type="number"
-                        value={targetValue}
-                        onChange={e => setTargetValue(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-1 block">
-                        Result ({selectedMeta?.resultUnit})
-                      </label>
-                      <input
-                        type="number"
-                        value={resultValue}
-                        onChange={e => setResultValue(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-1 block">Sets (optional)</label>
-                    <input
-                      type="number"
-                      value={sets}
-                      onChange={e => setSets(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-1 block">Date</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={e => setDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <button
-              onClick={handleAddWorkout}
-              disabled={!selectedWorkout || !targetValue || !resultValue || saving}
-              className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 font-medium disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Workout'}
+      {showForm && (
+        <div className="mb-6 animate-slide-up rounded-xl border border-border bg-card p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-heading text-lg font-semibold text-foreground">Log Workout</h3>
+            <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
+              <X className="h-5 w-5" />
             </button>
           </div>
-        )}
 
-        {/* Workout List Search */}
-        <div className="relative animate-slide-up">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-          <input
-            value={listSearch}
-            onChange={e => setListSearch(e.target.value)}
-            placeholder="Search logged workouts..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-background"
-          />
-        </div>
-
-        {/* Workouts List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center text-muted-foreground py-8">Loading workouts...</div>
-          ) : filteredWorkouts.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">No workouts found.</div>
-          ) : (
-            groupedByMonth.map(([month, items]) => (
-              <div key={month} className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground px-1">
-                  {format(parseISO(`${month}-01`), 'MMMM yyyy')}
-                </h3>
-                <div className="space-y-2">
-                  {items.map((w) => (
-                    <div key={w.id} className="bg-card border border-border rounded-xl p-4 animate-scale-in">
-                      {editingWorkout?.id === w.id ? (
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-sm font-medium text-foreground mb-1 block">Workout Type</label>
-                            <select
-                              value={editWorkoutType}
-                              onChange={e => setEditWorkoutType(e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                            >
-                              {WORKOUTS.map(workout => (
-                                <option key={workout.id} value={workout.id}>
-                                  {workout.icon} {workout.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-sm font-medium text-foreground mb-1 block">
-                                Target ({getWorkoutUnit(editWorkoutType, 'target')})
-                              </label>
-                              <input
-                                type="number"
-                                value={editTargetValue}
-                                onChange={e => setEditTargetValue(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium text-foreground mb-1 block">
-                                Result ({getWorkoutUnit(editWorkoutType, 'result')})
-                              </label>
-                              <input
-                                type="number"
-                                value={editResultValue}
-                                onChange={e => setEditResultValue(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-sm font-medium text-foreground mb-1 block">Sets</label>
-                              <input
-                                type="number"
-                                value={editSets}
-                                onChange={e => setEditSets(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium text-foreground mb-1 block">Date</label>
-                              <input
-                                type="date"
-                                value={editDate}
-                                onChange={e => setEditDate(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            <button
-                              onClick={saveEdit}
-                              className="flex-1 bg-primary text-primary-foreground rounded-lg py-2 text-sm font-medium"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingWorkout(null)}
-                              className="flex-1 bg-muted text-muted-foreground rounded-lg py-2 text-sm font-medium"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="font-medium text-foreground">
-                              {getWorkoutDisplayName(w.workout_type)}
-                            </div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {w.target_value}
-                              {getWorkoutUnit(w.workout_type, 'target')} → {w.result_value}
-                              {getWorkoutUnit(w.workout_type, 'result')}
-                              {w.sets != null ? ` • ${w.sets} sets` : ''}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {format(parseISO(w.workout_date), 'dd MMM yyyy')}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => startEdit(w)}
-                              className="p-2 rounded-lg hover:bg-muted transition-colors"
-                              title="Edit workout"
-                            >
-                              <Pencil className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <button
-                              onClick={() => requestDelete(w)}
-                              className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
-                              title="Delete workout"
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+          {!selectedWorkout ? (
+            <>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search workouts..."
+                  className="w-full rounded-lg border border-border bg-secondary py-2.5 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
               </div>
-            ))
+              <div className="grid grid-cols-2 gap-2">
+                {filteredFormWorkouts.map((w) => (
+                  <button
+                    key={w.id}
+                    onClick={() => setSelectedWorkout(w)}
+                    className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3 text-left transition-all hover:border-primary hover:bg-muted"
+                  >
+                    <span className="text-2xl">{w.icon}</span>
+                    <span className="text-sm font-medium text-foreground">{w.label}</span>
+                  </button>
+                ))}
+                {filteredFormWorkouts.length === 0 && (
+                  <p className="col-span-2 py-4 text-center text-sm text-muted-foreground">No workouts found</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <span className="text-2xl">{selectedWorkout.icon}</span>
+                <span className="font-medium text-foreground">{selectedWorkout.label}</span>
+                <button onClick={() => setSelectedWorkout(null)} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
+                  Change
+                </button>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Date</label>
+                <input
+                  type="date"
+                  value={workoutDate}
+                  onChange={(e) => setWorkoutDate(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  {selectedWorkout.primaryUnit === 'km' || selectedWorkout.primaryUnit === 'meters' ? 'Distance' : 'Reps'} ({selectedWorkout.primaryUnit})
+                </label>
+                <input
+                  type="number"
+                  value={targetValue}
+                  onChange={(e) => setTargetValue(e.target.value)}
+                  placeholder={`e.g. ${selectedWorkout.primaryUnit === 'km' ? '5' : selectedWorkout.primaryUnit === 'meters' ? '500' : '10'}`}
+                  className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {needsSetsInput && (
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Sets</label>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={setsValue}
+                    onChange={(e) => setSetsValue(e.target.value)}
+                    placeholder="e.g. 3"
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+
+              {(selectedWorkout.resultUnit === 'min' || selectedWorkout.resultUnit === 'sec') ? (
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground">
+                      Time ({useSeconds ? 'sec' : 'min'})
+                    </label>
+                    <div className="ml-auto flex items-center gap-1.5 text-xs">
+                      <span className={!useSeconds ? 'font-semibold text-foreground' : 'text-muted-foreground'}>min</span>
+                      <button
+                        type="button"
+                        onClick={() => setUseSeconds(!useSeconds)}
+                        className={`relative h-5 w-9 rounded-full transition-colors ${useSeconds ? 'bg-primary' : 'bg-border'}`}
+                      >
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-foreground transition-transform ${useSeconds ? 'left-[18px]' : 'left-0.5'}`} />
+                      </button>
+                      <span className={useSeconds ? 'font-semibold text-foreground' : 'text-muted-foreground'}>sec</span>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    value={resultValue}
+                    onChange={(e) => setResultValue(e.target.value)}
+                    placeholder={`e.g. ${useSeconds ? '120' : '30'}`}
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    {selectedWorkout.resultUnit === 'kg' ? 'Weight (kg)' : `Count (${selectedWorkout.resultUnit})`}
+                  </label>
+                  <input
+                    type="number"
+                    value={resultValue}
+                    onChange={(e) => setResultValue(e.target.value)}
+                    placeholder="e.g. 60"
+                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={handleAdd}
+                disabled={!targetValue || !resultValue || (needsSetsInput && !setsValue) || saving}
+                className="w-full rounded-lg bg-primary py-3 font-heading font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : '💪 Log Workout'}
+              </button>
+            </div>
           )}
         </div>
+      )}
 
-        {/* Longest Streak Card */}
-        <div className="bg-gradient-secondary rounded-xl p-4 text-secondary-foreground animate-slide-up">
-          <div className="text-2xl font-bold">{longestStreak}</div>
-          <div className="text-sm opacity-90">Longest Streak</div>
+      {selectedDates.size > 0 && (
+        <div className="mt-8 mb-2 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            Filtering by {selectedDates.size} day{selectedDates.size > 1 ? 's' : ''}
+          </span>
+          <button
+            onClick={() => setSelectedDates(new Set())}
+            className="text-xs text-primary hover:underline"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
+
+      <div className={`${selectedDates.size > 0 ? 'mt-0' : 'mt-8'} rounded-xl border border-border bg-card p-4`}>
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
+            className="rounded-lg px-3 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            ‹
+          </button>
+          <h3 className="font-heading text-lg font-semibold text-foreground">
+            {format(calendarMonth, 'MMMM yyyy')}
+          </h3>
+          <button
+            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
+            className="rounded-lg px-3 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="mb-2 grid grid-cols-7 text-center">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+            <span key={d} className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              {d}
+            </span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: startDayOfWeek }).map((_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+          {daysInMonth.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const hasWorkout = workoutDates.has(dateStr);
+            const isToday = isSameDay(day, new Date());
+            const isSelected = selectedDates.has(dateStr);
+
+            return (
+              <button
+                key={dateStr}
+                onClick={() => {
+                  if (!hasWorkout) return;
+                  setSelectedDates((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(dateStr)) {
+                      next.delete(dateStr);
+                    } else {
+                      next.add(dateStr);
+                    }
+                    return next;
+                  });
+                }}
+                disabled={!hasWorkout}
+                className={`flex h-9 items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary/50'
+                    : hasWorkout
+                    ? 'bg-primary/20 text-primary font-bold cursor-pointer hover:bg-primary/30'
+                    : isToday
+                    ? 'border border-border text-foreground'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {day.getDate()}
+                {hasWorkout && !isSelected && (
+                  <span className="ml-0.5 text-[8px]">●</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && workoutToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card border border-border rounded-xl p-6 max-w-sm w-full animate-scale-in">
-            <h3 className="font-semibold text-foreground mb-2">Delete Workout?</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Are you sure you want to delete this workout? This action cannot be undone.
-            </p>
-            <div className="text-sm bg-muted rounded-lg p-3 mb-4">
-              <div className="font-medium">{getWorkoutDisplayName(workoutToDelete.workout_type)}</div>
-              <div className="text-muted-foreground">
-                {workoutToDelete.target_value}{getWorkoutUnit(workoutToDelete.workout_type, 'target')} → {workoutToDelete.result_value}{getWorkoutUnit(workoutToDelete.workout_type, 'result')}
-              </div>
+      <div className="relative mb-4 mt-6">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={listSearch}
+          onChange={(e) => setListSearch(e.target.value)}
+          placeholder="Search logged workouts..."
+          className="w-full rounded-lg border border-border bg-secondary py-2.5 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+
+      <div className="space-y-3">
+        {filteredWorkouts.map((w) => {
+          const workout = getWorkout(w.workout_type);
+          const showSets = !CARDIO_WORKOUT_IDS.has(w.workout_type);
+
+          return (
+            <div key={w.id} className="rounded-xl border border-border bg-card p-4 transition-all">
+              {editingWorkout?.id === w.id ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                    <span className="font-heading font-bold text-foreground">{workout?.label ?? w.workout_type}</span>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Date</label>
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">{w.target_unit}</label>
+                      <input
+                        type="number"
+                        value={editTargetValue}
+                        onChange={(e) => setEditTargetValue(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">{w.result_unit}</label>
+                      <input
+                        type="number"
+                        value={editResultValue}
+                        onChange={(e) => setEditResultValue(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {editNeedsSetsInput && (
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">Sets</label>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={editSetsValue}
+                        onChange={(e) => setEditSetsValue(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button onClick={handleEditSave} className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                      Save
+                    </button>
+                    <button onClick={() => setEditingWorkout(null)} className="flex-1 rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <span className="text-3xl">{workout?.icon ?? '🏅'}</span>
+                  <div className="flex-1">
+                    <h3 className="font-heading text-lg font-bold text-foreground">
+                      {workout?.label ?? w.workout_type}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {w.target_value} {w.target_unit}
+                      <span className="mx-1.5 text-border">·</span>
+                      {w.result_value} {w.result_unit}
+                      {showSets && w.sets != null && (
+                        <>
+                          <span className="mx-1.5 text-border">·</span>
+                          {w.sets} sets
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground mr-1">
+                      {format(parseISO(w.workout_date), 'dd MMM yyyy')}
+                    </p>
+                    <button onClick={() => startEdit(w)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground">
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => handleDelete(w.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={cancelDelete}
-                className="flex-1 bg-muted text-muted-foreground rounded-lg py-2.5 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 bg-destructive text-destructive-foreground rounded-lg py-2.5 font-medium"
-              >
-                Delete
-              </button>
-            </div>
+          );
+        })}
+
+        {filteredWorkouts.length === 0 && workouts.length > 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">No workouts match your search.</p>
+        )}
+
+        {workouts.length === 0 && !showForm && (
+          <div className="flex flex-col items-center py-16 text-center">
+            <Dumbbell className="mb-3 h-12 w-12 text-muted-foreground" />
+            <p className="text-muted-foreground">No workouts logged yet. Start tracking!</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
