@@ -346,7 +346,7 @@ export default function Goals() {
               </div>
 
               <div className="mb-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                {renderWorkoutIcon(workout, 'h-6 w-6')}
                 <span className="font-medium text-foreground">{workout?.label ?? editingGoal.workout_type}</span>
               </div>
 
