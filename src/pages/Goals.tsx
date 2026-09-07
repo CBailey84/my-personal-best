@@ -210,7 +210,7 @@ export default function Goals() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                <span className="text-2xl">{selectedWorkout.icon}</span>
+                {renderWorkoutIcon(selectedWorkout, 'h-6 w-6')}
                 <span className="font-medium text-foreground">{selectedWorkout.label}</span>
                 <button
                   onClick={() => setSelectedWorkout(null)}
