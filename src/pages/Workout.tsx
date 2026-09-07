@@ -5,22 +5,31 @@ import { Plus, X, Search, Dumbbell, Pencil, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from 'date-fns';
 import Fireworks from '@/components/Fireworks';
+import dipsIcon from '@/assets/dips-icon.png.asset.json';
 
 const WORKOUTS = [
-  { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min' },
-  { id: 'bike', label: 'Bike', icon: '🚴', primaryUnit: 'km', resultUnit: 'min' },
-  { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'push-ups', label: 'Push Ups', icon: '🙌', primaryUnit: 'reps', resultUnit: 'reps' },
-  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', primaryUnit: 'reps', resultUnit: 'reps' },
-  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'seated-row', label: 'Seated Row', icon: '🚣', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', resultUnit: 'sec' },
-  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', resultUnit: 'kg' },
-  { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', resultUnit: 'min' },
-  { id: 'dips', label: 'Dips', icon: '🤸', primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'run', label: 'Run', icon: '🏃', imageIcon: undefined as string | undefined, primaryUnit: 'km', resultUnit: 'min' },
+  { id: 'bike', label: 'Bike', icon: '🚴', imageIcon: undefined as string | undefined, primaryUnit: 'km', resultUnit: 'min' },
+  { id: 'bench', label: 'Bench Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'leg-press', label: 'Leg Press', icon: '🦵', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'push-ups', label: 'Push Ups', icon: '🙌', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'reps' },
+  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'reps' },
+  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'seated-row', label: 'Seated Row', icon: '🚣', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'sec' },
+  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg' },
+  { id: 'swim', label: 'Swim', icon: '🏊', imageIcon: undefined as string | undefined, primaryUnit: 'meters', resultUnit: 'min' },
+  { id: 'dips', label: 'Dips', icon: '🤸', imageIcon: dipsIcon.url, primaryUnit: 'reps', resultUnit: 'kg' },
 ];
+
+const renderWorkoutIcon = (workout: typeof WORKOUTS[0] | undefined, sizeClass: string, fallback = '🏅') => {
+  if (!workout) return <span className={sizeClass}>{fallback}</span>;
+  if (workout.imageIcon) {
+    return <img src={workout.imageIcon} alt={workout.label} className={`${sizeClass} object-contain`} />;
+  }
+  return <span className={sizeClass}>{workout.icon}</span>;
+};
 
 const CARDIO_WORKOUT_IDS = new Set(['run', 'bike', 'swim']);
 
