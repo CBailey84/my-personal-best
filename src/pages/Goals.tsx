@@ -273,7 +273,7 @@ export default function Goals() {
                   : 'border-border bg-card box-glow'
               }`}
             >
-              <span className="text-3xl">{workout?.icon ?? '🏅'}</span>
+              {renderWorkoutIcon(workout, 'h-8 w-8')}
               <div className="flex-1">
                 <h3 className={`font-heading text-lg font-bold ${goal.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                   {workout?.label ?? goal.workout_type}
