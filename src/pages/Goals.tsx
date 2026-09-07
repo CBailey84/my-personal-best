@@ -3,22 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot, Pencil, Trash2 } from 'lucide-react';
+import dipsIcon from '@/assets/dips-icon.png.asset.json';
 
 const WORKOUTS = [
-  { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', secondaryUnit: 'min' },
-  { id: 'bike', label: 'Bike', icon: '🚴', primaryUnit: 'km', secondaryUnit: 'min' },
-  { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'push-ups', label: 'Push Ups', icon: '🙌', primaryUnit: 'reps', secondaryUnit: null },
-  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', primaryUnit: 'reps', secondaryUnit: null },
-  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'seated-row', label: 'Seated Row', icon: '🚣', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', secondaryUnit: 'sec' },
-  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', secondaryUnit: 'min' },
-  { id: 'dips', label: 'Dips', icon: '🤸', primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'run', label: 'Run', icon: '🏃', imageIcon: undefined as string | undefined, primaryUnit: 'km', secondaryUnit: 'min' },
+  { id: 'bike', label: 'Bike', icon: '🚴', imageIcon: undefined as string | undefined, primaryUnit: 'km', secondaryUnit: 'min' },
+  { id: 'bench', label: 'Bench Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'leg-press', label: 'Leg Press', icon: '🦵', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'push-ups', label: 'Push Ups', icon: '🙌', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: null },
+  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: null },
+  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'seated-row', label: 'Seated Row', icon: '🚣', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'sec' },
+  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'swim', label: 'Swim', icon: '🏊', imageIcon: undefined as string | undefined, primaryUnit: 'meters', secondaryUnit: 'min' },
+  { id: 'dips', label: 'Dips', icon: '🤸', imageIcon: dipsIcon.url, primaryUnit: 'reps', secondaryUnit: 'kg' },
 ];
+
+const renderWorkoutIcon = (workout: typeof WORKOUTS[0] | undefined, sizeClass: string, fallback = '🏅') => {
+  if (!workout) return <span className={sizeClass}>{fallback}</span>;
+  if (workout.imageIcon) {
+    return <img src={workout.imageIcon} alt={workout.label} className={`${sizeClass} object-contain`} />;
+  }
+  return <span className={sizeClass}>{workout.icon}</span>;
+};
 
 interface Goal {
   id: string;
