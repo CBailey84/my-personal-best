@@ -3,22 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Check, Search, X, Bike, Footprints, Dumbbell, ArrowUp, ArrowDown, Eye, EyeOff, Bot, Pencil, Trash2 } from 'lucide-react';
+import dipsIcon from '@/assets/dips-icon.png.asset.json';
 
 const WORKOUTS = [
-  { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', secondaryUnit: 'min' },
-  { id: 'bike', label: 'Bike', icon: '🚴', primaryUnit: 'km', secondaryUnit: 'min' },
-  { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'push-ups', label: 'Push Ups', icon: '🙌', primaryUnit: 'reps', secondaryUnit: null },
-  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', primaryUnit: 'reps', secondaryUnit: null },
-  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'seated-row', label: 'Seated Row', icon: '🚣', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', secondaryUnit: 'sec' },
-  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', secondaryUnit: 'kg' },
-  { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', secondaryUnit: 'min' },
-  { id: 'dips', label: 'Dips', icon: '🤸', primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'run', label: 'Run', icon: '🏃', imageIcon: undefined as string | undefined, primaryUnit: 'km', secondaryUnit: 'min' },
+  { id: 'bike', label: 'Bike', icon: '🚴', imageIcon: undefined as string | undefined, primaryUnit: 'km', secondaryUnit: 'min' },
+  { id: 'bench', label: 'Bench Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'leg-press', label: 'Leg Press', icon: '🦵', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'push-ups', label: 'Push Ups', icon: '🙌', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: null },
+  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: null },
+  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'seated-row', label: 'Seated Row', icon: '🚣', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'sec' },
+  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', secondaryUnit: 'kg' },
+  { id: 'swim', label: 'Swim', icon: '🏊', imageIcon: undefined as string | undefined, primaryUnit: 'meters', secondaryUnit: 'min' },
+  { id: 'dips', label: 'Dips', icon: '🤸', imageIcon: dipsIcon.url, primaryUnit: 'reps', secondaryUnit: 'kg' },
 ];
+
+const renderWorkoutIcon = (workout: typeof WORKOUTS[0] | undefined, sizeClass: string, fallback = '🏅') => {
+  if (!workout) return <span className={sizeClass}>{fallback}</span>;
+  if (workout.imageIcon) {
+    return <img src={workout.imageIcon} alt={workout.label} className={`${sizeClass} object-contain`} />;
+  }
+  return <span className={sizeClass}>{workout.icon}</span>;
+};
 
 interface Goal {
   id: string;
@@ -189,7 +198,7 @@ export default function Goals() {
                     onClick={() => setSelectedWorkout(w)}
                     className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3 text-left transition-all hover:border-primary hover:bg-muted"
                   >
-                    <span className="text-2xl">{w.icon}</span>
+                    {renderWorkoutIcon(w, 'h-6 w-6')}
                     <span className="text-sm font-medium text-foreground">{w.label}</span>
                   </button>
                 ))}
@@ -201,7 +210,7 @@ export default function Goals() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                <span className="text-2xl">{selectedWorkout.icon}</span>
+                {renderWorkoutIcon(selectedWorkout, 'h-6 w-6')}
                 <span className="font-medium text-foreground">{selectedWorkout.label}</span>
                 <button
                   onClick={() => setSelectedWorkout(null)}
@@ -264,7 +273,7 @@ export default function Goals() {
                   : 'border-border bg-card box-glow'
               }`}
             >
-              <span className="text-3xl">{workout?.icon ?? '🏅'}</span>
+              {renderWorkoutIcon(workout, 'h-8 w-8')}
               <div className="flex-1">
                 <h3 className={`font-heading text-lg font-bold ${goal.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                   {workout?.label ?? goal.workout_type}
@@ -337,7 +346,7 @@ export default function Goals() {
               </div>
 
               <div className="mb-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                {renderWorkoutIcon(workout, 'h-6 w-6')}
                 <span className="font-medium text-foreground">{workout?.label ?? editingGoal.workout_type}</span>
               </div>
 
