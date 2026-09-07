@@ -395,21 +395,7 @@ export default function WorkoutPage() {
         </div>
       )}
 
-      {selectedDates.size > 0 && (
-        <div className="mt-8 mb-2 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Filtering by {selectedDates.size} day{selectedDates.size > 1 ? 's' : ''}
-          </span>
-          <button
-            onClick={() => setSelectedDates(new Set())}
-            className="text-xs text-primary hover:underline"
-          >
-            Clear filter
-          </button>
-        </div>
-      )}
-
-      <div className={`${selectedDates.size > 0 ? 'mt-0' : 'mt-8'} rounded-xl border border-border bg-card p-4`}>
+      <div className="mt-8 rounded-xl border border-border bg-card p-4">
         <div className="mb-4 flex items-center justify-between">
           <button
             onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
@@ -481,6 +467,20 @@ export default function WorkoutPage() {
           })}
         </div>
       </div>
+
+      {selectedDates.size > 0 && (
+        <div className="mt-4 mb-2 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            Filtering by {selectedDates.size} day{selectedDates.size > 1 ? 's' : ''}
+          </span>
+          <button
+            onClick={() => setSelectedDates(new Set())}
+            className="text-xs text-primary hover:underline"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       <div className="relative mb-4 mt-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
