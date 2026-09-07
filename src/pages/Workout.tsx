@@ -19,6 +19,7 @@ const WORKOUTS = [
   { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', resultUnit: 'sec' },
   { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', resultUnit: 'kg' },
   { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', resultUnit: 'min' },
+  { id: 'dips', label: 'Dips', icon: '🤸', primaryUnit: 'reps', resultUnit: 'kg' },
 ];
 
 const CARDIO_WORKOUT_IDS = new Set(['run', 'bike', 'swim']);
