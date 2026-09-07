@@ -295,7 +295,7 @@ export default function WorkoutPage() {
                     onClick={() => setSelectedWorkout(w)}
                     className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3 text-left transition-all hover:border-primary hover:bg-muted"
                   >
-                    <span className="text-2xl">{w.icon}</span>
+                    {renderWorkoutIcon(w, 'h-6 w-6')}
                     <span className="text-sm font-medium text-foreground">{w.label}</span>
                   </button>
                 ))}
