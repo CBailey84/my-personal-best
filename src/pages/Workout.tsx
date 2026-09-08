@@ -307,7 +307,7 @@ export default function WorkoutPage() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                <span className="text-2xl">{selectedWorkout.icon}</span>
+                {renderWorkoutIcon(selectedWorkout, 'text-2xl h-8 w-8')}
                 <span className="font-medium text-foreground">{selectedWorkout.label}</span>
                 <button onClick={() => setSelectedWorkout(null)} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
                   Change
@@ -512,7 +512,7 @@ export default function WorkoutPage() {
               {editingWorkout?.id === w.id ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{workout?.icon ?? '🏅'}</span>
+                    {renderWorkoutIcon(workout, 'text-2xl h-8 w-8')}
                     <span className="font-heading font-bold text-foreground">{workout?.label ?? w.workout_type}</span>
                   </div>
                   <div>
@@ -570,7 +570,7 @@ export default function WorkoutPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
-                  <span className="text-3xl">{workout?.icon ?? '🏅'}</span>
+                  {renderWorkoutIcon(workout, 'text-3xl h-10 w-10')}
                   <div className="flex-1">
                     <h3 className="font-heading text-lg font-bold text-foreground">
                       {workout?.label ?? w.workout_type}

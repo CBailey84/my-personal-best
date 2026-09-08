@@ -3,22 +3,31 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import dipsIcon from '@/assets/dips-icon.png.asset.json';
 
 const WORKOUTS = [
-  { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
-  { id: 'bike', label: 'Bike', icon: '🚴', primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
-  { id: 'bench', label: 'Bench Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
-  { id: 'leg-press', label: 'Leg Press', icon: '🦵', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
-  { id: 'push-ups', label: 'Push Ups', icon: '🙌', primaryUnit: 'reps', resultUnit: 'reps', bestIs: 'highest' as const },
-  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', primaryUnit: 'reps', resultUnit: 'reps', bestIs: 'highest' as const },
-  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
-  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
-  { id: 'seated-row', label: 'Seated Row', icon: '🚣', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
-  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', primaryUnit: 'reps', resultUnit: 'sec', bestIs: 'highest' as const },
-  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
-  { id: 'swim', label: 'Swim', icon: '🏊', primaryUnit: 'meters', resultUnit: 'min', bestIs: 'lowest' as const },
-  { id: 'dips', label: 'Dips', icon: '🤸', primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'run', label: 'Run', icon: '🏃', imageIcon: undefined as string | undefined, primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
+  { id: 'bike', label: 'Bike', icon: '🚴', imageIcon: undefined as string | undefined, primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
+  { id: 'bench', label: 'Bench Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'leg-press', label: 'Leg Press', icon: '🦵', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'push-ups', label: 'Push Ups', icon: '🙌', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'reps', bestIs: 'highest' as const },
+  { id: 'pull-ups', label: 'Pull Ups', icon: '✊', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'reps', bestIs: 'highest' as const },
+  { id: 'bicep-curls', label: 'Bicep Curls', icon: '💪', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'shoulder-press', label: 'Shoulder Press', icon: '🏋️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'seated-row', label: 'Seated Row', icon: '🚣', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'dead-hang', label: 'Dead-hang', icon: '🧗', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'sec', bestIs: 'highest' as const },
+  { id: 'barbell-squats', label: 'Barbell Squats', icon: '🏋️‍♂️', imageIcon: undefined as string | undefined, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
+  { id: 'swim', label: 'Swim', icon: '🏊', imageIcon: undefined as string | undefined, primaryUnit: 'meters', resultUnit: 'min', bestIs: 'lowest' as const },
+  { id: 'dips', label: 'Dips', icon: '🤸', imageIcon: dipsIcon.url, primaryUnit: 'reps', resultUnit: 'kg', bestIs: 'highest' as const },
 ];
+
+const renderWorkoutIcon = (workout: typeof WORKOUTS[0] | undefined, sizeClass: string, fallback = '🏅') => {
+  if (!workout) return <span className={sizeClass}>{fallback}</span>;
+  if (workout.imageIcon) {
+    return <img src={workout.imageIcon} alt={workout.label} className={`${sizeClass} object-contain`} />;
+  }
+  return <span className={sizeClass}>{workout.icon}</span>;
+};
 
 interface WorkoutRecord {
   id: string;
@@ -184,9 +193,9 @@ export default function PersonalBests() {
               <div className="pointer-events-none absolute -left-2 -bottom-2 h-12 w-12 rounded-full bg-gold/5 blur-xl" />
 
               <div className="relative flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/20 bg-gold/10 text-2xl">
-                  {workout?.icon ?? '🏅'}
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/20 bg-gold/10 text-2xl">
+                  {renderWorkoutIcon(workout, 'text-2xl h-10 w-10')}
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-heading text-lg font-bold text-gold-light">
