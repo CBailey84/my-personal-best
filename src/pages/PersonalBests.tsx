@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import dipsIcon from '@/assets/dips-icon.png.asset.json';
 
 const WORKOUTS = [
