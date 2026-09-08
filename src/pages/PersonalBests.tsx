@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import dipsIcon from '@/assets/dips-icon.png.asset.json';
 
 const WORKOUTS = [
   { id: 'run', label: 'Run', icon: '🏃', primaryUnit: 'km', resultUnit: 'min', bestIs: 'lowest' as const },
