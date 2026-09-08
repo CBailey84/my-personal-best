@@ -154,25 +154,35 @@ export default function PersonalBests() {
         </p>
       </div>
 
-      {/* Workout Type Filter */}
-      <div className="mb-4">
-        <label htmlFor="workout-filter" className="mb-1 block text-xs text-muted-foreground">
-          Filter by workout type
-        </label>
-        <select
-          id="workout-filter"
-          value={selectedWorkout}
-          onChange={(e) => setSelectedWorkout(e.target.value)}
-          className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="all">All workout types</option>
-          {WORKOUTS.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.icon} {w.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Workout Type Filter */}
+      <div className="mb-4">
+        <label className="mb-1 block text-xs text-muted-foreground">Filter by workout type</label>
+        <Select value={selectedWorkout} onValueChange={(value) => setSelectedWorkout(value)}>
+          <SelectTrigger className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground focus:ring-primary">
+            <SelectValue placeholder="All workout types">
+              {selectedWorkout === 'all' ? (
+                'All workout types'
+              ) : (
+                <span className="flex items-center gap-2">
+                  {renderWorkoutIcon(getWorkout(selectedWorkout), 'h-5 w-5')}
+                  {getWorkout(selectedWorkout)?.label ?? selectedWorkout}
+                </span>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-lg border border-border bg-secondary">
+            <SelectItem value="all">All workout types</SelectItem>
+            {WORKOUTS.map((w) => (
+              <SelectItem key={w.id} value={w.id}>
+                <span className="flex items-center gap-2">
+                  {renderWorkoutIcon(w, 'h-5 w-5')}
+                  {w.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* PB Tiles */}
       <div className="space-y-3">
