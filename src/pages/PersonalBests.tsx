@@ -193,9 +193,9 @@ export default function PersonalBests() {
               <div className="pointer-events-none absolute -left-2 -bottom-2 h-12 w-12 rounded-full bg-gold/5 blur-xl" />
 
               <div className="relative flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/20 bg-gold/10 text-2xl">
-                  {workout?.icon ?? '🏅'}
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/20 bg-gold/10 text-2xl">
+                  {renderWorkoutIcon(workout, 'text-2xl h-10 w-10')}
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-heading text-lg font-bold text-gold-light">
